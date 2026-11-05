@@ -26,7 +26,9 @@ jobs:
         shell: powershell
         run: |
           $spec = Get-Content -Raw ./windows/ubuntu.json | ConvertFrom-Json
-          $sums = (Invoke-WebRequest -UseBasicParsing -Uri $spec.checksums).Content
+          $metadata = Join-Path $env:RUNNER_TEMP 'a1-ubuntu-SHA256SUMS'
+          Invoke-WebRequest -UseBasicParsing -Uri $spec.checksums -OutFile $metadata
+          $sums = Get-Content -Raw -LiteralPath $metadata
           $expected = '(?m)^' + [regex]::Escape($spec.sha256) + '\s+\*?' + [regex]::Escape($spec.file) + '\s*$'
           if ($sums -notmatch $expected) { throw 'Pinned Ubuntu digest differs from Canonical metadata' }
           Write-Host 'PASS: pinned Ubuntu rootfs digest matches official dated Canonical metadata.'
