@@ -56,6 +56,7 @@ def load(name,path):
  spec=importlib.util.spec_from_file_location(name,path);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
 def patch_mounted(root,esp,efi,home,edid):
  from assets import prepare
+ from extras_bundle import stage_extras
  install=load('a1install',HERE/'install.py');support=load('a1support',REPO/'payload/etc/aokzoe-a1/support.py');transform=load('a1transform',REPO/'recovery/transform.py')
  grub=efi/'EFI/steamos/grub.cfg';stock=grub.read_text()
  uuid=subprocess.check_output(['findmnt','-nro','UUID','--target',str(esp)],text=True).strip()
@@ -66,7 +67,7 @@ def patch_mounted(root,esp,efi,home,edid):
  if not (root/'usr/lib/rauc/atomic-update-keep.conf').is_file():raise RuntimeError('Native RAUC preservation layout changed')
  # Transform in a temporary directory; never replace pristine source until verified.
  with tempfile.TemporaryDirectory(prefix='a1-stage-') as t:
-  stage=pathlib.Path(t)/'payload';shutil.copytree(REPO/'payload',stage,symlinks=True);prepare(stage/'etc/aokzoe-a1',edid)
+  stage=pathlib.Path(t)/'payload';shutil.copytree(REPO/'payload',stage,symlinks=True);prepare(stage/'etc/aokzoe-a1',edid);stage_extras(REPO,stage)
   shutil.copyfile(HERE/'install.py',stage/'etc/aokzoe-a1/manage.py')
   transform.transform(tools/'repair_device.sh',pathlib.Path(t)/'repair_device.sh')
   names=[str(p.relative_to(stage)) for p in stage.rglob('*') if p.is_file()]+['etc/'+install.REL,'esp/aokzoe-a1/edid.cpio']

@@ -1,0 +1,27 @@
+{
+  "decky": {
+    "version": "3.3.1",
+    "url": "https://github.com/SteamDeckHomebrew/decky-loader/releases/download/v3.3.1/PluginLoader",
+    "sha256": "7bb73b0502c49e7194f34f9ce4ddb6777764e9277d7a5e54665f66460d50c315"
+  },
+  "service": {
+    "url": "https://raw.githubusercontent.com/SteamDeckHomebrew/decky-loader/ffd103b9c1a4ce5bf305e7c0998eda6e05457dad/dist/plugin_loader-release.service",
+    "sha256": "64d6aa626aa45e1659e3137aa3afd72edd840094199d62bb6ff2e73c5ce738b1"
+  },
+  "tdp": {
+    "version": "1.0.7",
+    "url": "https://github.com/aarron-lee/SimpleDeckyTDP/releases/download/v1.0.7/SimpleDeckyTDP.zip",
+    "sha256": "dae7cf43ec8936c07a94a08ac418be8d9e129744a54f3aa63d2b31222bc0ad38"
+  },
+  "css": {
+    "version": "2.1.3",
+    "url": "https://cdn.tzatzikiweeb.moe/file/steam-deck-homebrew/versions/99beaf1374af82408e6d056e0b0147e5fca544e1035fa7ab88419231697bc231.zip",
+    "sha256": "99beaf1374af82408e6d056e0b0147e5fca544e1035fa7ab88419231697bc231",
+    "source": "https://plugins.deckbrew.xyz/plugins"
+  },
+  "glyphs": {
+    "commit": "a7eb5ef6d91e1af2d315c73112b5a4eec7b10939",
+    "url": "https://codeload.github.com/victor-borges/handheld-controller-glyphs/tar.gz/a7eb5ef6d91e1af2d315c73112b5a4eec7b10939",
+    "sha256": "4db633a9bf2dbc587d0cf87af42c4e0ca1f7d8e1ea439eb280434f99ed33e1aa"
+  }
+}

@@ -17,6 +17,9 @@
     "/etc/aokzoe-a1/manifest.json",
     "/etc/systemd/system/systemd-suspend.service.d/aokzoe-a1.conf",
     "/etc/systemd/system/systemd-suspend.service.d/aokzoe-a1.conf",
-    "/etc/aokzoe-a1/manage.py"
+    "/etc/aokzoe-a1/manage.py",
+    "/etc/aokzoe-a1/extras/tools/desktop.py",
+    "/etc/aokzoe-a1/extras/tools/extras.py",
+    "/etc/aokzoe-a1/extras/extras/packages.json"
   ]
 }

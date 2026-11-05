@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 """Original AOKZOE A1 support without replacing vendor system files."""
-import hashlib,json,os,pathlib,re,subprocess,sys,tempfile
+import hashlib,json,os,pathlib,pwd,re,subprocess,sys,tempfile
 BASE=pathlib.Path('/etc/aokzoe-a1')
 EDID_SHA256='85a76fda934a88aa08fe6c2575da82a834160071a8e76c20de16cb79d3003e70'
 ARGS='drm.edid_firmware=eDP-1:edid/aokzoea1ar07_edid.bin firmware_class.path=/etc/aokzoe-a1/firmware video=eDP-1:panel_orientation=left_side_up'
@@ -97,6 +97,23 @@ def grub():
   entry=make_entry(p.stdout,uuid)
   print(entry)
  except (OSError,RuntimeError,subprocess.SubprocessError) as e:log(str(e))
+EXTRAS_LAUNCHER='[Desktop Entry]\nType=Application\nName=Set Up A1 Extras\nComment=Optional Decky, 30 W TDP preset and AOKZOE A1 controller glyphs after SteamOS installation\nExec=/usr/bin/python3 /etc/aokzoe-a1/extras/tools/desktop.py extras\nIcon=utilities-terminal\nTerminal=false\nCategories=System;\n'
+def extras_desktop():
+ try:
+  account=pwd.getpwnam('deck')
+  if account.pw_uid==0 or account.pw_dir!='/home/deck':return None,None
+  folder=pathlib.Path(account.pw_dir)/'Desktop'
+  if not folder.parent.is_dir() or folder.is_symlink():return None,None
+  return folder/'Set-Up-A1-Extras.desktop',account
+ except KeyError:return None,None
+def seed_extras_launcher():
+ path,account=extras_desktop()
+ if path is not None and not path.exists() and not path.is_symlink():
+  if not path.parent.exists():path.parent.mkdir();os.chown(path.parent,account.pw_uid,account.pw_gid)
+  atomic_write(path,EXTRAS_LAUNCHER.encode(),0o755);os.chown(path,account.pw_uid,account.pw_gid)
+def remove_extras_launcher():
+ path,account=extras_desktop()
+ if path is not None and not path.is_symlink() and path.is_file() and path.read_text()==EXTRAS_LAUNCHER:path.unlink()
 def persistent_files(manifest):
  # Image-seeded undo files must also be copied up before the first A/B update.
  names=list(manifest['files'])
@@ -116,6 +133,7 @@ def bootstrap():
    tmp.symlink_to(target);os.replace(tmp,p)
   else:atomic_write(p,p.read_bytes(),p.stat().st_mode&0o777)
  uuid=stage_esp()
+ seed_extras_launcher()
  standby_status="unsupported firmware; unchanged"
  try:
   standby();standby_status="firmware PWRB wake disabled; fixed physical button wake enabled"

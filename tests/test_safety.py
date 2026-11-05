@@ -66,6 +66,13 @@ class Transaction(unittest.TestCase):
    self.assertTrue(link.is_symlink());self.assertTrue(link.resolve().is_file())
    i.copy_payload(R/'payload',root)
    self.assertTrue(link.is_symlink());self.assertTrue(link.resolve().is_file())
+ def test_upgrade_extends_original_baseline(self):
+  with tempfile.TemporaryDirectory() as t:
+   root=pathlib.Path(t)/'root';root.mkdir();(root/'old').write_text('baseline')
+   original=pathlib.Path(t)/'original';i.capture(root,['old'],original)
+   (root/'old').write_text('installed');before=pathlib.Path(t)/'before';i.capture(root,['old','new'],before);i.extend_baseline(before,original)
+   (root/'new').write_text('new release file');i.restore(root,original)
+   self.assertEqual((root/'old').read_text(),'baseline');self.assertFalse((root/'new').exists())
  def test_refuse_symlink_parent(self):
   with tempfile.TemporaryDirectory() as t:
    root=pathlib.Path(t);(root/'etc').symlink_to(root)

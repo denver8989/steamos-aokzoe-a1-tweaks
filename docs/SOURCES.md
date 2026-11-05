@@ -8,3 +8,13 @@
 - The standby workaround comes from the reported runtime A1 investigation: a firmware `SPTS` notification generates an immediate spurious PNP0C0C wake. The repository contains only the minimal AML byte signature used for a guard and synthetic tests, not the machine's DSDT, journals or serial information.
 
 Own original code is MIT-licensed. This does not relicense referenced firmware, Valve material or optional downloaded tools. No distribution affiliation or official device support is implied.
+
+
+## Optional post-install extras
+
+- [Decky Loader](https://github.com/SteamDeckHomebrew/decky-loader), its [installer](https://github.com/SteamDeckHomebrew/decky-installer/blob/main/cli/install_release.sh), and pinned release/service metadata. The setup uses the official binary and native service layout, keeping detected existing installations.
+- [SimpleDeckyTDP](https://github.com/aarron-lee/SimpleDeckyTDP), release 1.0.7. Reviewed `plugin_settings.py`, `settingsSlice.ts` and advanced-options schema: the optional preset changes only the default profile's `tdp`, ensures the slider can reach 30 W, and enables the plugin's TDP control. Existing per-game and other controls remain.
+- [CSS Loader](https://github.com/DeckThemes/SDH-CssLoader) and [Decky store metadata](https://plugins.deckbrew.xyz/plugins). The GitHub release was older than the compatible store version. Version 2.1.3 is fetched from the store's content-addressed CDN URL and checked against the store's SHA-256. The reviewed build supports theme manifest version 9 and `config_USER.json` / `config_ROOT.json`.
+- [Handheld Controller Glyphs](https://github.com/victor-borges/handheld-controller-glyphs), commit `a7eb5ef6d91e1af2d315c73112b5a4eec7b10939`. Its theme manifest explicitly contains the `AOKZOE A1` Handheld option. Both CSS Loader configuration variants are seeded with this choice and activation enabled.
+
+All downloads and digests are listed in `extras/packages.json`. No third-party plugin binary, full plugin source or theme asset is redistributed in the release; these are downloaded from upstream only when selected on the installed device. Their licenses remain upstream.

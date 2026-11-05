@@ -4,6 +4,42 @@ Display, rotation, audio and guarded standby support for **AOKZOE A1 AR07** runn
 
 **Preview release:** the underlying standby wake-policy workaround passed reported physical tests on BIOS 1.30 and SteamOS 3.9.5. This new transactional installer has local safety and file-integration tests; its installation/reboot, a real SteamOS A/B update and the complete mounted-image patch path remain untested. Keep a working recovery USB.
 
+## Double-click setup
+
+On a Linux/KDE desktop, extract the release archive and open:
+
+| Launcher | When to use it |
+| --- | --- |
+| **Patch-A1-Recovery-Image.desktop** | Choose Valve's original `.img.bz2` or `.img`, choose a new output name, then enter your password in the progress terminal. |
+| **Install-A1-Tweaks.desktop** | Install the hardware fixes on the original A1 after Valve SteamOS is installed. |
+| **Set-Up-A1-Extras.desktop** | After SteamOS installation, choose optional Decky plugins and the A1 theme. |
+
+KDE may ask you to allow execution of a downloaded launcher. Keep the extracted folder together. The image launcher needs the preparation tools listed below. It does not accept ISOs or patch a physical USB in place. Flash the generated image to a spare USB with Etcher. Windows/macOS launchers and direct USB flashing are not included.
+
+## Optional extras after installation
+
+**Set Up A1 Extras** is a separate desktop wizard. The hardware installer and patched image also stage it locally; bootstrap places its icon on the standard `deck` user's Desktop. It is optional, needs internet, and refuses SteamOS recovery environments. It offers:
+
+- Decky Loader (a detected existing installation is retained).
+- SimpleDeckyTDP.
+- A separate **30 W default profile** checkbox; it also selects SimpleDeckyTDP. The plugin applies this when it loads. Actual power may be clamped by firmware. Existing per-game profiles and other CPU/GPU settings are retained.
+- CSS Loader and Handheld Controller Glyphs, enabled with **Handheld = AOKZOE A1**.
+
+Choose the desired boxes, review the summary, enter your password in the terminal, then reboot and open Decky in Gaming Mode. Nothing is installed into the recovery environment and nothing is silently applied during OS installation. The 30 W preset is not selected automatically. No additional fan, undervolt or firmware changes are made by this setup.
+
+Packages are pinned: Decky 3.3.1, SimpleDeckyTDP 1.0.7, CSS Loader 2.1.3 from the Decky store, and a reviewed Handheld Controller Glyphs commit. Downloads must match recorded SHA-256 checksums before files are replaced. Plugin and theme files/settings are backed up under the user's `.local/state/aokzoe-a1-extras/`; **Restore previous extras** in the same wizard restores them. This is separate from hardware-tweak undo. Existing PowerControl is refused to avoid installing another TDP controller alongside it.
+
+Terminal equivalents, run on the installed A1 as its standard desktop user:
+
+```sh
+# Select all optional extras, including the explicitly requested 30 W default:
+sudo python3 tools/extras.py install --user deck --decky --tdp --30w --glyphs
+# Restore previous extras files/settings, then reboot:
+sudo python3 tools/extras.py undo --user deck
+```
+
+The extras setup has file-integration and rollback tests, but **Decky, plugin loading, live 30 W behavior and the new desktop dialogs have not been tested on the physical A1**. This remains a preview.
+
 ## Install on an A1 already running Valve SteamOS
 
 Download and extract the release source archive on the A1, open a terminal in its folder, then run:
@@ -79,4 +115,4 @@ The standby guard requires exact A1 DMI, BIOS **1.30 / 12/06/2022**, both power-
 
 ## Verification and limitations
 
-Run `python3 -m unittest discover -s tests -v`. See [validation](docs/VALIDATION.md) for exactly what was tested, and [sources](docs/SOURCES.md) for provenance and redistribution boundaries. No physical disk command is executed by the test suite. Updates may change the vendor interfaces; this is guarded persistence, not a promise of compatibility with arbitrary future SteamOS releases. Factory reset/reimage is outside update persistence. No fan or power-limit changes are included.
+Run `python3 -m unittest discover -s tests -v`. See [validation](docs/VALIDATION.md) for exactly what was tested, and [sources](docs/SOURCES.md) for provenance and redistribution boundaries. No physical disk command is executed by the test suite. Updates may change the vendor interfaces; this is guarded persistence, not a promise of compatibility with arbitrary future SteamOS releases. Factory reset/reimage is outside update persistence. Power-limit changes occur only if the optional 30 W preset is selected. Hardware fixes do not require extras.

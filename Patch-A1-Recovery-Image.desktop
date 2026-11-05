@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Patch A1 Recovery Image
+Comment=Choose a Valve recovery image and create an A1 image
+Exec=python3 -c "import os,sys; from urllib.parse import urlparse,unquote; p=sys.argv[1]; p=unquote(urlparse(p).path) if p.startswith('file:') else p; os.execv('/usr/bin/python3',['python3',os.path.join(os.path.dirname(p),'tools','desktop.py'),'image'])" %k
+Icon=utilities-terminal
+Terminal=false
+Categories=System;

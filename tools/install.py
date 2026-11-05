@@ -32,6 +32,14 @@ def capture(root,names,dest):
   elif p.exists():raise RuntimeError('Managed file is a directory: '+str(p))
   else:records[name]=None
  (dest/'index.json').write_text(json.dumps(records,indent=2)+'\n');return records
+def extend_baseline(before,original):
+ records=json.loads((original/'index.json').read_text())
+ for name,item in json.loads((before/'index.json').read_text()).items():
+  if name in records:continue
+  records[name]=item
+  if item is not None and 'link' not in item:
+   q=original/'files'/name;q.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(before/'files'/name,q)
+ (original/'index.json').write_text(json.dumps(records,indent=2)+'\n')
 def restore(root,snapshot):
  records=json.loads((snapshot/'index.json').read_text())
  for name,item in records.items():
@@ -72,29 +80,32 @@ def main():
   original=state/'original'
   if a.action=='undo':
    if not (original/'index.json').exists():raise RuntimeError('No undo backup; refusing to guess previous configuration')
-   # Keep backup/manager available so undo can be retried after an interrupted update.
+   # Keep backup available so undo can be retried after an interrupted update.
    restore(pathlib.Path('/'),original)
    command('systemctl','daemon-reload');command('update-grub')
    pathlib.Path('/run/wireplumber/wireplumber.conf.d/90-aokzoe-a1-analog.conf').unlink(missing_ok=True)
    try:
     # Re-enable only the endpoint changed by this bundle and only on reviewed firmware.
     import importlib.util
-    spec=importlib.util.spec_from_file_location('a1support',state/'undo-support.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);wake=m.standby_guard();previous=(state/'wake-before').read_text().strip()
+    spec=importlib.util.spec_from_file_location('a1support',state/'undo-support.py');m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);m.remove_extras_launcher();wake=m.standby_guard();previous=(state/'wake-before').read_text().strip()
     if previous not in ('enabled','disabled'):raise RuntimeError('Invalid recorded wake policy')
     wake.write_text(previous+'\n')
    except (OSError,RuntimeError) as e:print('Wake policy left unchanged: '+str(e))
    print('Undo complete. Reboot to return to the previous display/audio configuration.');return
   repo=pathlib.Path(__file__).resolve().parent.parent
   from assets import prepare
+  from extras_bundle import stage_extras
   with tempfile.TemporaryDirectory(prefix='a1-install-') as tmp:
    staging=pathlib.Path(tmp)/'payload';shutil.copytree(repo/'payload',staging,symlinks=True)
    prepare(staging/'etc/aokzoe-a1',a.edid)
+   stage_extras(repo,staging)
    shutil.copyfile(__file__,staging/'etc/aokzoe-a1/manage.py')
    names=['/'+str(x.relative_to(staging)) for x in staging.rglob('*') if x.is_file()]+['/etc/'+REL,'/esp/aokzoe-a1/edid.cpio']
    # Root-relative names cannot escape a fixture root or the installed root.
    names=[x.lstrip('/') for x in names]
    before=pathlib.Path(tmp)/'before';capture(pathlib.Path('/'),names,before)
    if not original.exists():shutil.copytree(before,original)
+   else:extend_baseline(before,original)
    shutil.copyfile(staging/'etc/aokzoe-a1/support.py',state/'undo-support.py')
    # Capture policy for failed-install rollback without storing DSDT or machine identifiers.
    wake=pathlib.Path('/sys/devices/platform/PNP0C0C:00/power/wakeup');oldwake=wake.read_text() if wake.exists() else None
