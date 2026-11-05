@@ -1,4 +1,4 @@
-# Windows 10/11 launcher. All Linux filesystem work runs inside the chosen WSL distro.
+# Guided Windows 10/11 x64 launcher. Linux setup is managed by the worker.
 param([switch]$SmokeTest)
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
@@ -7,99 +7,140 @@ Add-Type -AssemblyName System.Windows.Forms
 Add-Type -AssemblyName System.Drawing
 . "$PSScriptRoot\Common.ps1"
 [Windows.Forms.Application]::EnableVisualStyles()
-$repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $form = New-Object Windows.Forms.Form
-$form.Text = 'AOKZOE A1 - prepare SteamOS recovery media'
-$form.Size = New-Object Drawing.Size(760, 635)
+$form.Text = 'AOKZOE A1 - create SteamOS recovery media'
+$form.Size = New-Object Drawing.Size(760, 640)
 $form.StartPosition = 'CenterScreen'
-$form.FormBorderStyle = 'FixedDialog'
-$form.MaximizeBox = $false
-function Add-Label([string]$Text, [int]$Top, [int]$Height=45) {
+$form.FormBorderStyle = 'FixedDialog'; $form.MaximizeBox = $false
+$script:running = $null; $script:taskPath = ''; $script:pending = ''
+$script:currentLog = ''; $script:lastStage = ''
+function Add-Label([string]$Text,[int]$Top,[int]$Height=45) {
     $label = New-Object Windows.Forms.Label
-    $label.Text = $Text; $label.Location = New-Object Drawing.Point(20, $Top); $label.Size = New-Object Drawing.Size(700, $Height)
+    $label.Text=$Text; $label.Location=New-Object Drawing.Point(20,$Top); $label.Size=New-Object Drawing.Size(700,$Height)
     $form.Controls.Add($label)
+    return $label
 }
-function Show-Error($Exception) { [void][Windows.Forms.MessageBox]::Show([string]$Exception, 'Operation stopped', 'OK', 'Error') }
-function Add-Button([string]$Text, [int]$Top, [scriptblock]$Action, [int]$Left=20, [int]$Width=700) {
-    $button = New-Object Windows.Forms.Button
-    $button.Text = $Text; $button.Location = New-Object Drawing.Point($Left, $Top); $button.Size = New-Object Drawing.Size($Width, 34)
+function Show-Error($Exception) { [void][Windows.Forms.MessageBox]::Show([string]$Exception,'Operation stopped','OK','Error') }
+function Add-Button([string]$Text,[int]$Top,[scriptblock]$Action,[int]$Left=20,[int]$Width=700) {
+    $button=New-Object Windows.Forms.Button
+    $button.Text=$Text; $button.Location=New-Object Drawing.Point($Left,$Top); $button.Size=New-Object Drawing.Size($Width,34)
     $button.Add_Click({ try { & $Action } catch { Show-Error $_ } }.GetNewClosure())
     $form.Controls.Add($button)
+    return $button
 }
-Add-Label 'Use your own official Valve .img.bz2/.img. This toolkit does not host SteamOS. ISO files are not supported.' 15
-Add-Button '1. Open Valve download and license page' 63 { Start-Process 'https://store.steampowered.com/steamos/download/?ver=steamdeck' }
-Add-Label '2. One-time Linux backend: WSL 2 + Ubuntu/Debian. Windows setup may need administrator access and a restart. The backend must load Btrfs.' 108
-Add-Button 'Install WSL + Ubuntu (one-time)' 159 {
-    if ([Windows.Forms.MessageBox]::Show('This enables Microsoft WSL and installs Ubuntu. It may require a restart. Continue?', 'Install WSL', 'YesNo', 'Question') -eq 'Yes') {
-        Start-Process wsl.exe -Verb RunAs -ArgumentList @('--install','-d','Ubuntu','--no-launch')
+[void](Add-Label 'Create a SteamOS recovery USB for the original AOKZOE A1. Download the Valve recovery file, choose it below, then follow the steps in Rufus.' 15)
+$download=Add-Button '1. Download SteamOS from Valve' 65 { Start-Process 'https://store.steampowered.com/steamos/download/?ver=steamdeck' }
+[void](Add-Label '2. Choose the downloaded recovery file (.img.bz2 or .img). You can select the compressed download directly.' 110)
+$script:source=''
+$chosen=Add-Label 'No recovery file selected.' 195 30
+$choose=Add-Button 'Choose recovery file...' 157 {
+    $dialog=New-Object Windows.Forms.OpenFileDialog
+    $dialog.Filter='Valve recovery download (*.img.bz2;*.img)|*.img.bz2;*.img'
+    if ($dialog.ShowDialog() -eq 'OK') {
+        $script:source=Assert-A1RegularPath $dialog.FileName
+        $chosen.Text=[IO.Path]::GetFileName($script:source)
     }
-} 20 340
-Add-Button 'Open WSL setup instructions' 159 { Start-Process 'https://learn.microsoft.com/en-us/windows/wsl/install' } 380 340
-$distro = New-Object Windows.Forms.ComboBox
-$distro.Location = New-Object Drawing.Point(20, 211); $distro.Size = New-Object Drawing.Size(430, 30); $distro.DropDownStyle = 'DropDownList'; $form.Controls.Add($distro)
-function Refresh-Distros {
-    $distro.Items.Clear()
-    if (-not (Get-Command wsl.exe -ErrorAction SilentlyContinue)) { return }
-    $names = @(& wsl.exe --list --quiet)
-    if ($LASTEXITCODE -ne 0) { return }
-    foreach ($name in $names) {
-        $clean = ([string]$name).Replace([string][char]0, '').Trim()
-        if ($clean -and $clean -notmatch '^docker-desktop') { [void]$distro.Items.Add($clean) }
-    }
-    if ($distro.Items.Count -gt 0) { $distro.SelectedIndex = 0 }
 }
-Add-Button 'Refresh WSL distributions' 205 { Refresh-Distros } 470 250
-function Selected-Distro {
-    if ($null -eq $distro.SelectedItem) { throw 'Install and initialize Ubuntu, restart if requested, then refresh this list.' }
-    return [string]$distro.SelectedItem
-}
-function Launch-Worker($Task) {
-    $directory = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'A1-Patcher\tasks'
+$dualBox=New-Object Windows.Forms.CheckBox
+$dualBox.Text='Include experimental option to install alongside Windows'
+$dualBox.Location=New-Object Drawing.Point(20,233); $dualBox.Size=New-Object Drawing.Size(700,25); $form.Controls.Add($dualBox)
+$rufusBox=New-Object Windows.Forms.CheckBox
+$rufusBox.Text='Open Rufus when ready (downloads verified official Rufus if needed)'; $rufusBox.Checked=$true
+$rufusBox.Location=New-Object Drawing.Point(20,264); $rufusBox.Size=New-Object Drawing.Size(700,25); $form.Controls.Add($rufusBox)
+[void](Add-Label 'First use downloads the preparation component (WSL 2 + Ubuntu, about 340 MB plus tools). Windows may ask for administrator approval and a restart. Setup is automatic; no Linux account is needed.' 303 52)
+function Launch-Worker($Task,[string]$Existing='') {
+    if ($null -ne $script:running) { throw 'Preparation is already running.' }
+    $directory=Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'A1-Patcher\tasks'
     [void][IO.Directory]::CreateDirectory($directory)
-    $file = Join-Path $directory (([Guid]::NewGuid().ToString()) + '.json')
-    [IO.File]::WriteAllText($file, ($Task | ConvertTo-Json -Depth 6), [Text.UTF8Encoding]::new($false))
-    $script = Join-Path $PSScriptRoot 'Worker.ps1'
-    # Windows filenames cannot contain quotes. -File parses these as path arguments, not script text.
-    $arguments = '-NoProfile -ExecutionPolicy Bypass -File "' + $script + '" -TaskFile "' + $file + '"'
-    Start-Process powershell.exe -ArgumentList $arguments
-}
-Add-Button 'Prepare Linux backend (install tools in selected WSL distribution)' 251 {
-    $selected = Selected-Distro
-    if ([Windows.Forms.MessageBox]::Show("Install the required Linux packages inside $selected? This uses apt and internet access. No Windows disk is repartitioned.", 'Prepare backend', 'YesNo', 'Question') -eq 'Yes') {
-        Launch-Worker @{action='prepare';distro=$selected}
+    $script:pending=Join-Path $directory 'pending.txt'
+    $file=$Existing
+    if (-not $file) {
+        $file=Join-Path $directory (([Guid]::NewGuid().ToString())+'.json')
+        [IO.File]::WriteAllText($file,($Task | ConvertTo-Json -Depth 6),[Text.UTF8Encoding]::new($false))
     }
+    [IO.File]::WriteAllText($script:pending,$file)
+    $script:taskPath=$file; $script:currentLog=$file+'.log'; $script:lastStage=''
+    $statusFile=$file+'.status.json'
+    if (Test-Path -LiteralPath $statusFile) { Remove-Item -LiteralPath $statusFile }
+    $worker=Join-Path $PSScriptRoot 'Worker.ps1'
+    $arguments='-NoProfile -ExecutionPolicy Bypass -File "'+$worker+'" -TaskFile "'+$file+'"'
+    $script:running=Start-Process powershell.exe -ArgumentList $arguments -WindowStyle Hidden -RedirectStandardOutput $script:currentLog -RedirectStandardError ($file+'.error.log') -PassThru
+    $status.Text='Starting preparation...'; $progress.Style='Marquee'
+    $create.Enabled=$false; $choose.Enabled=$false; $resume.Enabled=$false; $rufus.Enabled=$false
 }
-Add-Label '3. Patch a local image, then write that image with Rufus, following Valve''s Windows instructions. Keep your known working USB intact.' 302
-$dualBox = New-Object Windows.Forms.CheckBox
-$dualBox.Text = 'Include experimental Install Alongside Windows option (32+ GiB trailing unallocated space)'
-$dualBox.Location = New-Object Drawing.Point(20, 350); $dualBox.Size = New-Object Drawing.Size(700, 25); $form.Controls.Add($dualBox)
-$rufusBox = New-Object Windows.Forms.CheckBox
-$rufusBox.Text = 'Open Rufus when finished (download the verified official portable release if needed)'
-$rufusBox.Location = New-Object Drawing.Point(20, 381); $rufusBox.Size = New-Object Drawing.Size(700, 25); $form.Controls.Add($rufusBox)
-Add-Button 'Choose Valve image and create A1 recovery image' 417 {
-    $selected = Selected-Distro
-    $open = New-Object Windows.Forms.OpenFileDialog
-    $open.Filter = 'Valve recovery image (*.img.bz2;*.img)|*.img.bz2;*.img'
-    if ($open.ShowDialog() -ne 'OK') { return }
-    $save = New-Object Windows.Forms.SaveFileDialog
-    $save.Filter = 'Disk image (*.img)|*.img'; $save.FileName = 'aokzoe-a1-recovery.img'; $save.OverwritePrompt = $true
+$create=Add-Button '3. Create recovery image' 367 {
+    if (-not $script:source) { throw 'Choose your downloaded Valve recovery file first.' }
+    $save=New-Object Windows.Forms.SaveFileDialog
+    $save.Filter='Recovery image (*.img)|*.img'; $save.FileName='aokzoe-a1-recovery.img'
     if ($save.ShowDialog() -ne 'OK') { return }
-    $source = Assert-A1RegularPath $open.FileName
-    $output = Assert-A1RegularPath $save.FileName -New
-    Launch-Worker @{action='image';distro=$selected;source=$source;output=$output;includeDualBoot=[bool]$dualBox.Checked;openRufus=[bool]$rufusBox.Checked}
+    $output=Assert-A1RegularPath $save.FileName -New
+    Launch-Worker @{action='image';source=$script:source;output=$output;includeDualBoot=[bool]$dualBox.Checked;openRufus=[bool]$rufusBox.Checked}
 }
-Add-Button 'Open Rufus for an already patched image (official download if needed)' 465 {
-    $open = New-Object Windows.Forms.OpenFileDialog
-    $open.Filter = 'Patched recovery image (*.img)|*.img'
-    if ($open.ShowDialog() -ne 'OK') { return }
-    Launch-Worker @{action='rufus';source=(Assert-A1RegularPath $open.FileName)}
+$status=Add-Label 'Ready. Keep your existing working USB safe; use a spare 16 GB or larger USB.' 413 65
+$progress=New-Object Windows.Forms.ProgressBar
+$progress.Location=New-Object Drawing.Point(20,481); $progress.Size=New-Object Drawing.Size(700,15); $form.Controls.Add($progress)
+$resume=Add-Button 'Continue saved preparation' 509 {
+    $saved=Get-Content -Raw -LiteralPath $script:pending
+    $task=Get-Content -Raw -LiteralPath $saved | ConvertFrom-Json
+    if ($task.action -eq 'image') { [void](Assert-A1RegularPath $task.source); [void](Assert-A1RegularPath $task.output -New) }
+    Launch-Worker $task $saved
+} 20 340
+$resume.Enabled=$false
+$log=Add-Button 'View progress logs' 509 {
+    if ($script:currentLog) {
+        foreach ($path in @($script:currentLog,($script:currentLog -replace '\.log$','.error.log'))) {
+            if (Test-Path -LiteralPath $path) { Start-Process notepad.exe -ArgumentList ('"'+$path+'"') }
+        }
+    }
+} 380 340
+$rufus=Add-Button 'Open Rufus with an existing patched image...' 553 {
+    $dialog=New-Object Windows.Forms.OpenFileDialog; $dialog.Filter='Patched recovery image (*.img)|*.img'
+    if ($dialog.ShowDialog() -eq 'OK') { Launch-Worker @{action='rufus';source=(Assert-A1RegularPath $dialog.FileName)} }
 }
-Add-Label '4. In Rufus, verify the USB and patched image, then click START. Rufus will erase the selected USB. This patcher does not select or write physical disks. After booting the USB, choose full reinstall or the optional dual-boot workflow.' 512 70
+$timer=New-Object Windows.Forms.Timer; $timer.Interval=500
+function Read-A1Status {
+    try {
+        $file=$script:taskPath+'.status.json'
+        if (Test-Path -LiteralPath $file) {
+            $state=Get-Content -Raw -LiteralPath $file | ConvertFrom-Json
+            $status.Text=$state.message; $script:lastStage=$state.stage
+        }
+    } catch { } # Atomic status replacement can briefly contend with reads.
+}
+$timer.Add_Tick({
+    if ($null -eq $script:running) { return }
+    Read-A1Status
+    if ($script:running.HasExited) {
+        Read-A1Status
+        $script:running.Dispose(); $script:running=$null
+        $progress.Style='Blocks'; $progress.Value=0
+        $create.Enabled=$true; $choose.Enabled=$true; $rufus.Enabled=$true
+        if ($script:lastStage -eq 'done') {
+            if (Test-Path -LiteralPath $script:pending) { Remove-Item -LiteralPath $script:pending }
+        } else {
+            $resume.Enabled=$true
+            if ($script:lastStage -notin @('error','restart')) { $status.Text='Preparation stopped unexpectedly. View the progress log for details, then try again.' }
+        }
+    }
+})
+$form.Add_FormClosing({ param($sender,$event)
+    if ($null -ne $script:running) {
+        $event.Cancel=$true
+        [void][Windows.Forms.MessageBox]::Show('Preparation is running. Please wait for it to finish before closing this app.','Preparation running','OK','Information')
+    }
+})
 if ($SmokeTest) {
-    if ($form.Controls.Count -lt 10) { throw 'Launcher controls were not constructed.' }
-    $form.Dispose()
-    Write-Host 'PASS: Windows Forms launcher constructs without displaying dialogs, querying WSL or accessing storage.'
+    if ($form.Controls.Count -lt 10 -or -not $rufusBox.Checked) { throw 'Guided launcher controls were not constructed.' }
+    $timer.Dispose(); $form.Dispose()
+    Write-Host 'PASS: guided Windows launcher constructs without displaying dialogs, querying WSL or accessing storage.'
     return
 }
-Refresh-Distros
+$script:pending=Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'A1-Patcher\tasks\pending.txt'
+if (Test-Path -LiteralPath $script:pending) {
+    $resume.Enabled=$true
+    $status.Text='A saved preparation is available. Click Continue to resume after setup or a restart.'
+    try { $script:currentLog=(Get-Content -Raw -LiteralPath $script:pending)+'.log' } catch { }
+}
+$timer.Start()
 [void]$form.ShowDialog()
+$timer.Dispose(); $form.Dispose()

@@ -47,3 +47,10 @@ The release is therefore a preview source/toolkit, not a hardware-certified imag
 - PowerShell parser and synthetic tests cover action refusal, valid/invalid publisher signatures, image checksum reports and the exact Rufus image-only launch arguments. No physical disk is accessed and Rufus is never executed in tests.
 - Windows CI downloads the pinned official portable Rufus and verifies its actual SHA-256 and Authenticode publisher before caching it. This is a download/signature check, not a USB-write or interactive-launch test.
 - Previously recorded hardware, WSL, privileged image-mount and dual-boot limitations still apply.
+
+
+## Guided Windows first-use setup
+
+- The app now chooses a dedicated Ubuntu environment, installs missing components/tools and reports progress automatically. The GUI saves the selected image/output and offers Continue after a requested restart. Rufus is enabled by default.
+- Fixture tests cover rootfs checksum mismatch, WSL elevation arguments, restart exit codes, import arguments/version, verifying before import, environment reuse, conflicting registry paths/WSL 1 refusal and preparation of missing tools. No WSL executable, registry, Windows component or physical disk is accessed by these tests.
+- The pinned rootfs digest comes from Canonical's dated official SHA256SUMS. CI checks the source logic and GUI construction; first-use WSL installation/import, real reboot continuation and interactive progress still require a physical Windows PC test.

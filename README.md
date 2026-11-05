@@ -6,9 +6,9 @@ Display, rotation, audio and guarded standby support for **AOKZOE A1 AR07** runn
 
 ## Windows: start here
 
-Download and extract the **ZIP** release, then double-click **Start-A1-Patcher-Windows.cmd**. It opens Valve's own download/license page, offers one-time WSL 2/Ubuntu setup, prepares the Linux backend, and lets you select your original Valve `.img.bz2`/`.img` and a new patched image filename. Optionally let the patcher download and open verified official Rufus with the resulting `.img` selected; choose a spare USB and click START in Rufus.
+Download and extract the **ZIP** release, then double-click **Start-A1-Patcher-Windows.cmd**. Choose your downloaded Valve recovery file (`.img.bz2` or `.img`) and click **Create recovery image**. The app sets up its preparation environment automatically, shows progress, and opens verified official Rufus by default. Choose a spare USB in Rufus and click START. The Valve download/license page is available in the app.
 
-Windows preparation uses WSL 2 with Btrfs support; setup may need administrator approval and a restart. This is not a dependency-free native Windows filesystem patcher. Preparation edits a local image only. Rufus handles USB selection, confirmation and writing. See [Windows workflow and limits](docs/WINDOWS.md).
+On first use, the app installs WSL 2 and a dedicated Ubuntu preparation environment automatically (about 340 MB plus tools). Windows may request administrator approval and a restart; reopen the app and click **Continue saved preparation** afterward. No Linux account, terminal commands or distribution choice is needed. Preparation edits a local image only. Rufus handles USB selection, confirmation and writing. See [Windows workflow and limits](docs/WINDOWS.md).
 
 The project hosts **patchers and source only, no SteamOS images**. Users obtain Valve's image themselves and apply changes locally. See [distribution model](docs/DISTRIBUTION.md).
 

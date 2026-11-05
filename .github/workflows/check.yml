@@ -22,3 +22,11 @@ jobs:
           . ./windows/Rufus.ps1
           $verified = Get-A1Rufus -CacheDirectory (Join-Path $env:RUNNER_TEMP 'a1-rufus-verified')
           Write-Host "PASS: official Rufus checksum and Windows publisher signature verified: $verified"
+      - name: Check pinned Ubuntu metadata (no WSL installation)
+        shell: powershell
+        run: |
+          $spec = Get-Content -Raw ./windows/ubuntu.json | ConvertFrom-Json
+          $sums = (Invoke-WebRequest -UseBasicParsing -Uri $spec.checksums).Content
+          $expected = '(?m)^' + [regex]::Escape($spec.sha256) + '\s+\*?' + [regex]::Escape($spec.file) + '\s*$'
+          if ($sums -notmatch $expected) { throw 'Pinned Ubuntu digest differs from Canonical metadata' }
+          Write-Host 'PASS: pinned Ubuntu rootfs digest matches official dated Canonical metadata.'

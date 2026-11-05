@@ -54,4 +54,6 @@ Assert-Refused { Assert-A1RufusSignature ([pscustomobject]@{Status='Valid';Signe
 }
 Write-Host 'PASS: PowerShell syntax, action refusal, Rufus checksum/publisher guards, image reports and mocked launch. No physical disks or executables accessed.'
 
+& (Join-Path $PSScriptRoot 'windows-setup-check.ps1')
+
 if ($env:OS -eq 'Windows_NT') { & (Join-Path $repo 'windows/A1-Patcher.ps1') -SmokeTest }

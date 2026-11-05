@@ -1,0 +1,8 @@
+{
+  "file": "ubuntu-noble-wsl-amd64-24.04lts.rootfs.tar.gz",
+  "url": "https://cloud-images.ubuntu.com/wsl/releases/24.04/20240423/ubuntu-noble-wsl-amd64-24.04lts.rootfs.tar.gz",
+  "sha256": "2a790896740b14d637dbdc583cce1ba081ac53b9e9cdb46dc09a2f73abbd9934",
+  "checksums": "https://cloud-images.ubuntu.com/wsl/releases/24.04/20240423/SHA256SUMS",
+  "source": "https://cloud-images.ubuntu.com/wsl/releases/24.04/20240423/",
+  "terms": "https://ubuntu.com/legal/intellectual-property-policy"
+}
