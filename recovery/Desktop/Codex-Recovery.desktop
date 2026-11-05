@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Codex Recovery
+Comment=Open Codex with its command tools and SteamOS recovery notes
+Exec=/usr/bin/konsole --profile Installer --hold -e /home/deck/tools/start-codex-recovery.sh
+Icon=utilities-terminal
+Terminal=false
+StartupNotify=true
+Path=/home/deck/SteamOS-Recovery

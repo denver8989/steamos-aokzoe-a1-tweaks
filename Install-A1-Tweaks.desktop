@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Install AOKZOE A1 SteamOS Tweaks
+Comment=Install display, audio, persistence and guarded standby fixes
+Exec=konsole --hold -e python3 -c "import os,sys; from urllib.parse import urlparse,unquote; p=sys.argv[1]; p=unquote(urlparse(p).path) if p.startswith('file:') else p; os.execvp('sudo',['sudo','bash',os.path.join(os.path.dirname(p),'install.sh')])" %k
+Icon=utilities-terminal
+Terminal=false
+Categories=System;

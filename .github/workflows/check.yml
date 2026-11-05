@@ -1,0 +1,11 @@
+name: Safety checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y desktop-file-utils
+      - run: bash tests/check.sh

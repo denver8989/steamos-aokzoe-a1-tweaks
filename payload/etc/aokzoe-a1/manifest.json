@@ -1,0 +1,22 @@
+{
+  "version": 4,
+  "model": "AOKZOE A1 AR07",
+  "files": [
+    "/etc/aokzoe-a1/audio.conf",
+    "/etc/aokzoe-a1/bin/gamescope",
+    "/etc/aokzoe-a1/edid.cpio",
+    "/etc/aokzoe-a1/firmware/edid/aokzoea1ar07_edid.bin",
+    "/etc/aokzoe-a1/support.py",
+    "/etc/atomic-update.conf.d/90-aokzoe-a1.conf",
+    "/etc/default/grub.d/90-aokzoe-a1.cfg",
+    "/etc/grub.d/09_aokzoe_a1",
+    "/etc/systemd/system/aokzoe-a1-persistence.service",
+    "/etc/systemd/system/multi-user.target.wants/aokzoe-a1-persistence.service",
+    "/etc/systemd/system/wireplumber-sysconf.service.d/aokzoe-a1.conf",
+    "/etc/systemd/user/gamescope-session.service.d/aokzoe-a1.conf",
+    "/etc/aokzoe-a1/manifest.json",
+    "/etc/systemd/system/systemd-suspend.service.d/aokzoe-a1.conf",
+    "/etc/systemd/system/systemd-suspend.service.d/aokzoe-a1.conf",
+    "/etc/aokzoe-a1/manage.py"
+  ]
+}

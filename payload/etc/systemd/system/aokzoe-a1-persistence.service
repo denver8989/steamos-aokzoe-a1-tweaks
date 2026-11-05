@@ -1,0 +1,16 @@
+[Unit]
+Description=Preserve original AOKZOE A1 compatibility settings
+After=local-fs.target etc.mount esp.mount
+RequiresMountsFor=/esp
+Before=display-manager.service atomupd.service rauc.service wireplumber-sysconf.service
+ConditionPathExists=/etc/aokzoe-a1/support.py
+ConditionPathExists=!/etc/aokzoe-a1/disabled
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /etc/aokzoe-a1/support.py bootstrap
+RemainAfterExit=yes
+TimeoutStartSec=30
+
+[Install]
+WantedBy=multi-user.target

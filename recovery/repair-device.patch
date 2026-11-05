@@ -1,0 +1,95 @@
+--- repair_device.sh.stock
++++ repair_device.sh
+@@ -7,7 +7,8 @@
+ # destructive if you have modified the expected partition layout.
+ #
+ 
+-set -eu
++set -Eeuo pipefail
++[[ ${1:-} = all ]] || { echo "A1 guarded recovery supports only the explicit full reinstall action." >&2; exit 1; }
+ 
+ die() { echo >&2 "!! $*"; exit 1; }
+ readvar() { IFS= read -r -d '' "$1" || true; }
+@@ -93,11 +94,13 @@
+ ##
+ 
+ err() {
+-  echo >&2
+-  eerr "Imaging error occured, see above and restart process."
+-  sleep infinity
+-}
+-trap err ERR
++  local rc="$1" line="$2" failed_command="$3"
++  trap - ERR
++  eerr "Installation stopped at line ${line}: ${failed_command} (exit $rc)."
++  eerr "The full log is under /home/deck/SteamOS-Recovery/logs/."
++  exit "$rc"
++}
++trap 'err "$?" "$LINENO" "$BASH_COMMAND"' ERR
+ 
+ _sh_c_colors=0
+ [[ -n $TERM && -t 1 && ${TERM,,} != dumb ]] && _sh_c_colors="$(tput colors 2>/dev/null || echo 0)"
+@@ -223,12 +226,12 @@
+ }
+ trap exithandler EXIT
+ 
+-# Check existence of target disk
+-if [[ ! -e "$DISK" ]]; then
+-  eerr "$DISK does not exist -- no nvme drive detected?"
+-  sleep infinity
+-  exit 1
+-fi
++# Resolve the actual internal drive and exclude the running recovery USB.
++DISK="$(/usr/bin/python3 "$OWD/a1-disk-guard.py" select)"
++DISK_SUFFIX=p
++TARGET_SERIAL="$(lsblk --nodeps --noheadings --raw --output SERIAL "$DISK")"
++[[ -n "$TARGET_SERIAL" ]] || die "Could not read target disk identity."
++
+ 
+ # Reinstall a fresh SteamOS copy.
+ #
+@@ -236,7 +239,11 @@
+ {
+   if [[ $writePartitionTable = 1 ]]; then
+     estat "Write known partition table"
+-    echo "$PARTITION_TABLE" | sfdisk "$DISK"
++    printf '%s\n' "${PARTITION_TABLE//%%DISKPART%%/$DISK$DISK_SUFFIX}" | sfdisk --wipe always --wipe-partitions always "$DISK"
++    cmd udevadm settle --timeout=30
++    for part in {1..8}; do
++      [[ -b "$(diskpart "$part")" ]] || die "Partition $(diskpart "$part") did not appear after partitioning."
++    done
+ 
+   elif [[ $writeOS = 1 || $writeHome = 1 ]]; then
+ 
+@@ -276,7 +283,7 @@
+   fi
+ 
+   # Stage a BIOS update for next reboot if updating OS. OOBE images like this one don't auto-update the bios on boot.
+-  if [[ $writeOS = 1 ]]; then
++  if false; then # A1: never invoke Steam Deck BIOS/controller firmware tools
+     estat "Staging a BIOS update for next boot if necessary"
+     # If we included a VENDORED_BIOS_UPDATE directory above, use the newer payload there and point JUPITER_BIOS_DIR to
+     # it.  Directory should contain both a newer tool and newer firmware.
+@@ -310,7 +317,7 @@
+   fi
+ 
+   # Perform a controller update if updating OS.  OOBE images like this one don't auto-update controllers on boot.
+-  if [[ $writeOS = 1 ]]; then
++  if false; then # A1: never invoke Steam Deck BIOS/controller firmware tools
+     estat "Updating controller firmware if necessary"
+     controller_tool="/usr/bin/jupiter-controller-update"
+     # If we included a VENDORED_CONTROLLER_UPDATE directory above, use the newer payload and point
+@@ -450,11 +457,11 @@
+ 
+ case "${1-help}" in
+ all)
+-  prompt_step "Wipe Device & Install SteamOS" "This action will wipe and (re)install SteamOS on this device.\nThis will permanently destroy all data on your device.\n\nThis cannot be undone.\n\nChoose Proceed only if you wish to wipe and reinstall this device."
++  prompt_step "Wipe Device & Install SteamOS" "This action will repartition and format the internal drive $DISK and install SteamOS. This is a normal reinstall, not a secure data-sanitization operation.\nThis will permanently destroy all data on your device.\n\nThis cannot be undone.\n\nChoose Proceed only if you wish to wipe and reinstall this device."
+   writePartitionTable=1
+   writeOS=1
+   writeHome=1
+-  sanitize_all
++  /usr/bin/python3 "$OWD/a1-disk-guard.py" prepare --disk "$DISK" --serial "$TARGET_SERIAL"
+   repair_steps
+   prompt_reboot "Reimaging complete."
+   ;;

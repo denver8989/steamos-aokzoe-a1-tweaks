@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Wipe Device & Install SteamOS
+Comment=Install SteamOS on the AOKZOE A1 internal NVMe drive
+Exec=/usr/bin/konsole --profile Installer --hold -e /home/deck/tools/repair_reimage.sh
+Icon=run-install
+Terminal=false
+StartupNotify=true
+Path=/home/deck

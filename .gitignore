@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.cache/
+*.img
+*.img.bz2
+*.bin
+*.cpio
+build/
+*.partial
+.integration-*/

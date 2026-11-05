@@ -1,0 +1,6 @@
+#!/bin/sh
+# Unsupported future layouts leave Valve's stock entries available.
+if [ -x /usr/bin/python3 ]; then
+  /usr/bin/python3 /etc/aokzoe-a1/support.py grub || echo 'AOKZOE A1: compatibility generation failed; retaining stock boot entries' >&2
+fi
+exit 0
