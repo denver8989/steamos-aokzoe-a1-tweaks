@@ -35,7 +35,15 @@ The release is therefore a preview source/toolkit, not a hardware-certified imag
 ## Windows and dual-boot update
 
 - **43 Python tests** now pass. Added free-extent planning, no-overlap/original-entry preservation, exact created layout, unknown/existing/mixed-device layout refusal, disk-identity and GPT-race refusal before writes, native root/ESP/EFI mapping guards, and deterministic safe payload permissions when sources reside on a Windows filesystem.
-- PowerShell parser and synthetic storage tests pass with a portable official PowerShell runtime: boot/system/non-USB/read-only/offline/sector/size/identity refusals, bounded stream copy and SHA-256 read-back, unexpected EOF and compilation of the volume-lock interop code. Windows CI runs the same tests under Windows PowerShell and constructs the WinForms launcher without displaying dialogs, querying WSL or accessing storage. None of these tests open a physical disk.
+- Historical v0.3 checks (direct USB code has since been removed): PowerShell parser and synthetic storage tests passed with a portable official PowerShell runtime: boot/system/non-USB/read-only/offline/sector/size/identity refusals, bounded stream copy and SHA-256 read-back, unexpected EOF and compilation of the volume-lock interop code. That CI revision ran the same tests under Windows PowerShell and constructed the WinForms launcher without displaying dialogs, querying WSL or accessing storage. None of these tests open a physical disk.
 - The real checksum-pinned InnoVision script transforms and passes Bash syntax checks. Wipe, sanitize and arbitrary disk/index entry branches are absent; GPT creation/verification and native boot mapping checks precede their respective write stages. The full upstream script is not in the release.
 - A file-tree image integration test stages both the clean installer and the optional transformed dual-boot launcher, planner and complete A1 hardware/extras payload. Network responses, UUID lookup and ownership changes are mocked for this test; actual pinned upstream source and native Valve script are used privately.
-- **Still untested:** actual Windows GUI/WSL/Btrfs operation, physical USB locking/writes/boot, physical dual-boot partitioning, Windows/BitLocker preservation, native boot-helper mapping on a real dual-boot layout, and the previously listed core installer/update/plugin limitations. These are preview features, not validated production paths.
+- **Still untested:** actual Windows GUI/WSL/Btrfs operation, Rufus handoff/USB writing/boot, physical dual-boot partitioning, Windows/BitLocker preservation, native boot-helper mapping on a real dual-boot layout, and the previously listed core installer/update/plugin limitations. These are preview features, not validated production paths.
+
+
+## Image-only Windows preparation and optional Rufus
+
+- Removed all Windows physical-disk selection, capture, volume-locking and write code. Allowed worker actions are only prepare, image and rufus.
+- PowerShell parser and synthetic tests cover action refusal, valid/invalid publisher signatures, image checksum reports and the exact Rufus image-only launch arguments. No physical disk is accessed and Rufus is never executed in tests.
+- Windows CI downloads the pinned official portable Rufus and verifies its actual SHA-256 and Authenticode publisher before caching it. This is a download/signature check, not a USB-write or interactive-launch test.
+- Previously recorded hardware, WSL, privileged image-mount and dual-boot limitations still apply.

@@ -10,7 +10,7 @@ Add-Type -AssemblyName System.Drawing
 $repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '..'))
 $form = New-Object Windows.Forms.Form
 $form.Text = 'AOKZOE A1 - prepare SteamOS recovery media'
-$form.Size = New-Object Drawing.Size(760, 660)
+$form.Size = New-Object Drawing.Size(760, 635)
 $form.StartPosition = 'CenterScreen'
 $form.FormBorderStyle = 'FixedDialog'
 $form.MaximizeBox = $false
@@ -53,7 +53,7 @@ function Selected-Distro {
     if ($null -eq $distro.SelectedItem) { throw 'Install and initialize Ubuntu, restart if requested, then refresh this list.' }
     return [string]$distro.SelectedItem
 }
-function Launch-Worker($Task, [switch]$Admin) {
+function Launch-Worker($Task) {
     $directory = Join-Path ([Environment]::GetFolderPath('LocalApplicationData')) 'A1-Patcher\tasks'
     [void][IO.Directory]::CreateDirectory($directory)
     $file = Join-Path $directory (([Guid]::NewGuid().ToString()) + '.json')
@@ -61,8 +61,7 @@ function Launch-Worker($Task, [switch]$Admin) {
     $script = Join-Path $PSScriptRoot 'Worker.ps1'
     # Windows filenames cannot contain quotes. -File parses these as path arguments, not script text.
     $arguments = '-NoProfile -ExecutionPolicy Bypass -File "' + $script + '" -TaskFile "' + $file + '"'
-    if ($Admin) { Start-Process powershell.exe -Verb RunAs -ArgumentList $arguments }
-    else { Start-Process powershell.exe -ArgumentList $arguments }
+    Start-Process powershell.exe -ArgumentList $arguments
 }
 Add-Button 'Prepare Linux backend (install tools in selected WSL distribution)' 251 {
     $selected = Selected-Distro
@@ -70,8 +69,14 @@ Add-Button 'Prepare Linux backend (install tools in selected WSL distribution)' 
         Launch-Worker @{action='prepare';distro=$selected}
     }
 }
-Add-Label '3. Recommended: create a patched image file, then flash it to a spare USB with Etcher. Keep your known working USB intact.' 302
-Add-Button 'Choose Valve image and create A1 recovery image' 353 {
+Add-Label '3. Patch a local image, then write that image with Rufus, following Valve''s Windows instructions. Keep your known working USB intact.' 302
+$dualBox = New-Object Windows.Forms.CheckBox
+$dualBox.Text = 'Include experimental Install Alongside Windows option (32+ GiB trailing unallocated space)'
+$dualBox.Location = New-Object Drawing.Point(20, 350); $dualBox.Size = New-Object Drawing.Size(700, 25); $form.Controls.Add($dualBox)
+$rufusBox = New-Object Windows.Forms.CheckBox
+$rufusBox.Text = 'Open Rufus when finished (download the verified official portable release if needed)'
+$rufusBox.Location = New-Object Drawing.Point(20, 381); $rufusBox.Size = New-Object Drawing.Size(700, 25); $form.Controls.Add($rufusBox)
+Add-Button 'Choose Valve image and create A1 recovery image' 417 {
     $selected = Selected-Distro
     $open = New-Object Windows.Forms.OpenFileDialog
     $open.Filter = 'Valve recovery image (*.img.bz2;*.img)|*.img.bz2;*.img'
@@ -81,41 +86,15 @@ Add-Button 'Choose Valve image and create A1 recovery image' 353 {
     if ($save.ShowDialog() -ne 'OK') { return }
     $source = Assert-A1RegularPath $open.FileName
     $output = Assert-A1RegularPath $save.FileName -New
-    Launch-Worker @{action='image';distro=$selected;source=$source;output=$output;includeDualBoot=[bool]$dualBox.Checked}
+    Launch-Worker @{action='image';distro=$selected;source=$source;output=$output;includeDualBoot=[bool]$dualBox.Checked;openRufus=[bool]$rufusBox.Checked}
 }
-$dualBox = New-Object Windows.Forms.CheckBox
-$dualBox.Text = 'Include experimental Install Alongside Windows option (32+ GiB trailing unallocated space)'
-$dualBox.Location = New-Object Drawing.Point(20, 396); $dualBox.Size = New-Object Drawing.Size(700, 25); $form.Controls.Add($dualBox)
-Add-Label 'Alternative (experimental): patch a freshly written, unmodified Valve USB. Requires administrator access, a hardware serial, a separate workspace with 18 GiB free, and full image verification. Previously customized USBs are refused.' 428 55
-Add-Button 'Select a fresh Valve USB to patch (experimental)' 493 {
-    $selected = Selected-Distro
-    $principal = [Security.Principal.WindowsPrincipal]::new([Security.Principal.WindowsIdentity]::GetCurrent())
-    if (-not $principal.IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
-        $script = Join-Path $PSScriptRoot 'A1-Patcher.ps1'
-        Start-Process powershell.exe -Verb RunAs -ArgumentList ('-NoProfile -ExecutionPolicy Bypass -File "' + $script + '"')
-        return
-    }
-    $choices = @(Get-Disk | Where-Object { try { Assert-A1UsbDisk $_; $true } catch { $false } })
-    if ($choices.Count -eq 0) { throw 'No eligible USB found. Use the image-file workflow instead.' }
-    $picker = New-Object Windows.Forms.Form
-    $picker.Text='Select USB - no internal disks'; $picker.Size=New-Object Drawing.Size(650,240); $picker.StartPosition='CenterParent'
-    $list=New-Object Windows.Forms.ComboBox; $list.DropDownStyle='DropDownList'; $list.Location=New-Object Drawing.Point(20,20); $list.Size=New-Object Drawing.Size(590,30)
-    foreach($disk in $choices) { [void]$list.Items.Add(('Disk {0}: {1}, {2:N1} GiB, serial {3}' -f $disk.Number,$disk.FriendlyName,($disk.Size/1GB),$disk.SerialNumber)) }
-    $list.SelectedIndex=0; $picker.Controls.Add($list)
-    $label=New-Object Windows.Forms.Label; $label.Text='Type PATCH followed by the disk number (for example PATCH 4):'; $label.Location=New-Object Drawing.Point(20,65); $label.Size=New-Object Drawing.Size(590,25); $picker.Controls.Add($label)
-    $confirm=New-Object Windows.Forms.TextBox; $confirm.Location=New-Object Drawing.Point(20,95); $confirm.Size=New-Object Drawing.Size(590,25); $picker.Controls.Add($confirm)
-    $ok=New-Object Windows.Forms.Button; $ok.Text='Continue'; $ok.DialogResult='OK'; $ok.Location=New-Object Drawing.Point(460,140); $picker.Controls.Add($ok)
-    if($picker.ShowDialog($form) -ne 'OK') { return }
-    $disk=$choices[$list.SelectedIndex]
-    if($confirm.Text -cne ('PATCH '+$disk.Number)) { throw 'Confirmation did not match. No USB write was requested.' }
-    $folder=New-Object Windows.Forms.FolderBrowserDialog; $folder.Description='Choose a workspace on another disk with at least 18 GiB free.'
-    if($folder.ShowDialog() -ne 'OK') { return }
-    $id=[Guid]::NewGuid().ToString('N')
-    $source=Join-Path $folder.SelectedPath ('valve-original-prefix-'+$id+'.img')
-    $output=Join-Path $folder.SelectedPath ('a1-patched-'+$id+'.img')
-    Launch-Worker @{action='usb';distro=$selected;source=$source;output=$output;includeDualBoot=[bool]$dualBox.Checked;disk=(Get-A1DiskIdentity $disk)} -Admin
+Add-Button 'Open Rufus for an already patched image (official download if needed)' 465 {
+    $open = New-Object Windows.Forms.OpenFileDialog
+    $open.Filter = 'Patched recovery image (*.img)|*.img'
+    if ($open.ShowDialog() -ne 'OK') { return }
+    Launch-Worker @{action='rufus';source=(Assert-A1RegularPath $open.FileName)}
 }
-Add-Label 'After booting the USB: choose the matching install workflow. Optional Decky/TDP/theme setup runs only after SteamOS is fully installed. Preview: Windows hardware validation is pending.' 543 70
+Add-Label '4. In Rufus, verify the USB and patched image, then click START. Rufus will erase the selected USB. This patcher does not select or write physical disks. After booting the USB, choose full reinstall or the optional dual-boot workflow.' 512 70
 if ($SmokeTest) {
     if ($form.Controls.Count -lt 10) { throw 'Launcher controls were not constructed.' }
     $form.Dispose()

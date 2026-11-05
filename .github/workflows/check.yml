@@ -13,6 +13,12 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - name: PowerShell syntax and storage guard tests (no disks accessed)
+      - name: PowerShell and Rufus handoff tests (no disks accessed)
         shell: powershell
         run: ./tests/windows-check.ps1
+      - name: Verify official Rufus download (do not run executable)
+        shell: powershell
+        run: |
+          . ./windows/Rufus.ps1
+          $verified = Get-A1Rufus -CacheDirectory (Join-Path $env:RUNNER_TEMP 'a1-rufus-verified')
+          Write-Host "PASS: official Rufus checksum and Windows publisher signature verified: $verified"

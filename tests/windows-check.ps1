@@ -9,25 +9,49 @@ foreach($file in (Get-ChildItem (Join-Path $repo 'windows/*.ps1'))) {
 . (Join-Path $repo 'windows/Common.ps1')
 function Assert-True($Condition,[string]$Message) { if(-not $Condition) { throw $Message } }
 function Assert-Refused([scriptblock]$Action) { $failed=$false; try { & $Action } catch { $failed=$true }; Assert-True $failed 'Unsafe case was accepted' }
-$valid=[pscustomobject]@{Number=5;BusType='USB';IsBoot=$false;IsSystem=$false;IsReadOnly=$false;IsOffline=$false;PartitionStyle='GPT';LogicalSectorSize=512;Size=[long]32000000000;SerialNumber='SYNTHETIC';UniqueId='SYNTHETIC-UUID';Path='SYNTHETIC-PNP'}
-Assert-A1UsbDisk $valid
-$identity=Get-A1DiskIdentity $valid
-Assert-A1SameDisk $identity $valid
-foreach($entry in @(@('BusType','NVMe'),@('IsBoot',$true),@('IsSystem',$true),@('IsReadOnly',$true),@('IsOffline',$true),@('LogicalSectorSize',4096),@('SerialNumber',''),@('Size',1024))) {
-    $changed=$valid.PSObject.Copy(); $changed.($entry[0])=$entry[1]
-    Assert-Refused { Assert-A1UsbDisk $changed }
+. (Join-Path $repo 'windows/Rufus.ps1')
+foreach($action in @('prepare','image','rufus')) { Assert-A1TaskAction $action }
+foreach($action in @('usb','write','disk','format','IMAGE','')) { Assert-Refused { Assert-A1TaskAction $action } }
+$valid=[pscustomobject]@{Status='Valid';SignerCertificate=[pscustomobject]@{Subject='CN=Akeo Consulting, O=Akeo Consulting, C=IE'}}
+Assert-A1RufusSignature $valid 'Akeo Consulting'
+foreach($subject in @('CN=Other Publisher, O=Akeo Consulting','CN=Akeo Consulting Fake, O=Other','O=Akeo Consulting')) {
+    $bad=[pscustomobject]@{Status='Valid';SignerCertificate=[pscustomobject]@{Subject=$subject}}
+    Assert-Refused { Assert-A1RufusSignature $bad 'Akeo Consulting' }
 }
-$changed=$valid.PSObject.Copy(); $changed.SerialNumber='OTHER'; Assert-Refused { Assert-A1SameDisk $identity $changed }
-$bytes=[Text.Encoding]::UTF8.GetBytes('synthetic USB copy fixture')
-$source=[IO.MemoryStream]::new($bytes); $dest=[IO.MemoryStream]::new()
-try {
-    $hash=Copy-A1Range $source $dest $bytes.Length
-    Assert-True ([Text.Encoding]::UTF8.GetString($dest.ToArray()) -ceq 'synthetic USB copy fixture') 'Copy changed bytes'
-    $dest.Position=0; $check=Copy-A1Range $dest $null $bytes.Length
-    Assert-True ($hash -ceq $check) 'Read-back hash differs'
-    Assert-Refused { Copy-A1Range $dest $null 1 }
-} finally { $source.Dispose(); $dest.Dispose() }
-Initialize-A1VolumeApi
-Write-Host 'PASS: PowerShell syntax, USB boot/system/read-only/transport/identity/sector/size refusals, bounded copy/hash/read-back, EOF refusal and volume-lock API compilation. No physical storage accessed.'
+Assert-Refused { Assert-A1RufusSignature ([pscustomobject]@{Status='HashMismatch';SignerCertificate=$valid.SignerCertificate}) 'Akeo Consulting' }
+Assert-Refused { Assert-A1RufusSignature ([pscustomobject]@{Status='Valid';SignerCertificate=$null}) 'Akeo Consulting' }
+& {
+    $fixture=Join-Path ([IO.Path]::GetTempPath()) ('a1-rufus-test-'+[Guid]::NewGuid().ToString('N'))
+    [void][IO.Directory]::CreateDirectory($fixture)
+    try {
+        function Assert-A1RegularPath([string]$Path) { return $Path }
+        $image=Join-Path $fixture 'patched image.img'
+        [IO.File]::WriteAllBytes($image,[byte[]]@(1,2,3,4))
+        $hash=(Get-FileHash -LiteralPath $image -Algorithm SHA256).Hash.ToLowerInvariant()
+        @{bytes=4;output_sha256=$hash} | ConvertTo-Json | Set-Content -LiteralPath ($image+'.json')
+        Assert-True ((Assert-A1PatchedImage $image) -eq $image) 'Valid image report rejected'
+        @{bytes=5;output_sha256=$hash} | ConvertTo-Json | Set-Content -LiteralPath ($image+'.json')
+        Assert-Refused { Assert-A1PatchedImage $image }
+        @{bytes=4;output_sha256=('0'*64)} | ConvertTo-Json | Set-Content -LiteralPath ($image+'.json')
+        Assert-Refused { Assert-A1PatchedImage $image }
+        function Get-AuthenticodeSignature { return $valid }
+        Assert-A1RufusBinary $image ([pscustomobject]@{sha256=$hash;signer_cn='Akeo Consulting'})
+        Assert-Refused { Assert-A1RufusBinary $image ([pscustomobject]@{sha256=('0'*64);signer_cn='Akeo Consulting'}) }
+    } finally { Remove-Item -LiteralPath $fixture -Recurse -Force }
+}
+& {
+    function Assert-A1PatchedImage { return 'C:\synthetic path\patched.img' }
+    function Get-A1Rufus { return 'C:\synthetic path\rufus.exe' }
+    $script:launchObserved=$false
+    function Start-Process($FilePath,$Verb,$ArgumentList) {
+        Assert-True ($FilePath -ceq 'C:\synthetic path\rufus.exe') 'Unexpected executable'
+        Assert-True ($Verb -ceq 'RunAs') 'Rufus requires elevation'
+        Assert-True ($ArgumentList -ceq '-i "C:\synthetic path\patched.img"') 'Unexpected Rufus arguments'
+        $script:launchObserved=$true
+    }
+    Open-A1Rufus 'fixture'
+    Assert-True $script:launchObserved 'Rufus handoff was not observed'
+}
+Write-Host 'PASS: PowerShell syntax, action refusal, Rufus checksum/publisher guards, image reports and mocked launch. No physical disks or executables accessed.'
 
 if ($env:OS -eq 'Windows_NT') { & (Join-Path $repo 'windows/A1-Patcher.ps1') -SmokeTest }

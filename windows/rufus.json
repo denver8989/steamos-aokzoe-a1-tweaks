@@ -1,0 +1,9 @@
+{
+  "version": "4.15",
+  "file": "rufus-4.15p.exe",
+  "url": "https://github.com/pbatard/rufus/releases/download/v4.15/rufus-4.15p.exe",
+  "sha256": "84c8a437f8af89257524478489e5c85f1edf25f761d299e2bcde46ac0afbe106",
+  "signer_cn": "Akeo Consulting",
+  "source": "https://github.com/pbatard/rufus/tree/v4.15",
+  "license": "https://github.com/pbatard/rufus/blob/v4.15/LICENSE.txt"
+}

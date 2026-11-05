@@ -6,9 +6,9 @@ Display, rotation, audio and guarded standby support for **AOKZOE A1 AR07** runn
 
 ## Windows: start here
 
-Download and extract the **ZIP** release, then double-click **Start-A1-Patcher-Windows.cmd**. It opens Valve's own download/license page, offers one-time WSL 2/Ubuntu setup, prepares the Linux backend, and lets you select your original Valve `.img.bz2`/`.img` and a new patched image filename. Flash that local output to a spare USB with Etcher.
+Download and extract the **ZIP** release, then double-click **Start-A1-Patcher-Windows.cmd**. It opens Valve's own download/license page, offers one-time WSL 2/Ubuntu setup, prepares the Linux backend, and lets you select your original Valve `.img.bz2`/`.img` and a new patched image filename. Optionally let the patcher download and open verified official Rufus with the resulting `.img` selected; choose a spare USB and click START in Rufus.
 
-Windows preparation uses WSL 2 with Btrfs support; setup may need administrator approval and a restart. This is not a dependency-free native Windows filesystem patcher. A separate **experimental** option can patch a freshly written, pristine Valve USB using identity checks, a file backup, volume locking and read-back hashes. Customized/previously booted media are refused. See [Windows workflow and limits](docs/WINDOWS.md).
+Windows preparation uses WSL 2 with Btrfs support; setup may need administrator approval and a restart. This is not a dependency-free native Windows filesystem patcher. Preparation edits a local image only. Rufus handles USB selection, confirmation and writing. See [Windows workflow and limits](docs/WINDOWS.md).
 
 The project hosts **patchers and source only, no SteamOS images**. Users obtain Valve's image themselves and apply changes locally. See [distribution model](docs/DISTRIBUTION.md).
 
@@ -28,7 +28,7 @@ On a Linux/KDE desktop, extract the release archive and open:
 | **Install-A1-Tweaks.desktop** | Install the hardware fixes on the original A1 after Valve SteamOS is installed. |
 | **Set-Up-A1-Extras.desktop** | After SteamOS installation, choose optional Decky plugins and the A1 theme. |
 
-KDE may ask you to allow execution of a downloaded launcher. Keep the extracted folder together. The image launcher needs the preparation tools listed below. It does not accept ISOs or patch a physical USB in place. Flash the generated image to a spare USB with Etcher. The Windows launcher is described above. macOS launchers are not included; direct USB patching is experimental and currently Windows-only.
+KDE may ask you to allow execution of a downloaded launcher. Keep the extracted folder together. The image launcher needs the preparation tools listed below. It does not accept ISOs or patch a physical USB in place. Flash the generated image to a spare USB with Etcher. The Windows launcher is described above. macOS launchers are not included. Direct USB patching is not offered.
 
 ## Optional extras after installation
 
@@ -129,4 +129,4 @@ The standby guard requires exact A1 DMI, BIOS **1.30 / 12/06/2022**, both power-
 
 ## Verification and limitations
 
-Run `python3 -m unittest discover -s tests -v`. See [validation](docs/VALIDATION.md) for exactly what was tested, and [sources](docs/SOURCES.md) for provenance and redistribution boundaries. No physical disk command is executed by the test suite. `tests/windows-check.ps1` adds PowerShell parser, synthetic USB guard and bounded-copy tests without accessing storage. Updates may change the vendor interfaces; this is guarded persistence, not a promise of compatibility with arbitrary future SteamOS releases. Factory reset/reimage is outside update persistence. Power-limit changes occur only if the optional 30 W preset is selected. Hardware fixes do not require extras.
+Run `python3 -m unittest discover -s tests -v`. See [validation](docs/VALIDATION.md) for exactly what was tested, and [sources](docs/SOURCES.md) for provenance and redistribution boundaries. No physical disk command is executed by the test suite. `tests/windows-check.ps1` adds PowerShell parser, action allowlist, Rufus signature/checksum and launch-argument tests without accessing physical storage. Updates may change the vendor interfaces; this is guarded persistence, not a promise of compatibility with arbitrary future SteamOS releases. Factory reset/reimage is outside update persistence. Power-limit changes occur only if the optional 30 W preset is selected. Hardware fixes do not require extras.
