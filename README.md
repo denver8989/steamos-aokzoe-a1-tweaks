@@ -8,10 +8,12 @@ A community toolkit that prepares **Valve's SteamOS recovery image for the origi
 
 ## Is this for my device?
 
+**This project is exclusively for the original AOKZOE A1 AR07. Other devices are outside its scope; no additional-device support is planned.**
+
 | Device | Support in this project |
 | --- | --- |
 | **Original AOKZOE A1 — model AOKZOE A1 AR07** | Supported model; preview testing limits apply. |
-| AOKZOE A1 Pro, A1X or other handhelds | Not supported. |
+| AOKZOE A1 Pro, A1X or other handhelds | Unsupported and outside this project’s scope. |
 
 This is an independent community project, not an official Valve or AOKZOE product. We publish the patcher, not a modified SteamOS download. You get SteamOS directly from Valve and patch your own copy.
 
@@ -61,3 +63,9 @@ On an installed A1, hardware fixes can be undone using the [restore instructions
 The source has **60 passing Python tests**, Windows PowerShell checks and Windows/Linux CI. Full first-use Windows setup, privileged image patching, USB boot/install, a real SteamOS update and live extras/Wi-Fi effects still require hardware validation. Reported earlier standby tests do not validate this entire release. The guarded sleep workaround currently requires BIOS **1.30 / 12/06/2022**; other firmware is left unchanged. The known controller magic-message warning remains unresolved.
 
 [Exactly what was tested](docs/VALIDATION.md) · [Technical reference](docs/ADVANCED.md) · [Sources and licenses](docs/SOURCES.md) · [Distribution model](docs/DISTRIBUTION.md)
+
+## Credits
+
+Built on work by **Valve**, **Universal Blue/Bazzite**, **ChimeraOS**, **InnoVision Games and sorialexandre**, **Steam Deck Homebrew**, **Aarron Lee**, **DeckThemes/Jonas Dellinger**, **victor-borges and the theme’s upstream contributors**, **Pete Batard/Akeo Consulting**, **Microsoft**, **Canonical**, **OpenAI**, and the Linux/open-source communities.
+
+[Full credits and each contribution](CREDITS.md) · [Sources, pinned downloads and license notes](docs/SOURCES.md)

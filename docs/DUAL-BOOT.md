@@ -1,6 +1,6 @@
 # Install alongside Windows (experimental)
 
-This optional recovery workflow follows the partition-preserving approach of [InnoVision-Games/steam-os-custom-install](https://github.com/InnoVision-Games/steam-os-custom-install). The earlier `steamos-dual-boot` link is a boot-repair cheat sheet, not the installer.
+This optional recovery workflow follows the partition-preserving approach of [InnoVision-Games/steam-os-custom-install](https://github.com/InnoVision-Games/steam-os-custom-install). Credit also belongs to its parent project, [sorialexandre/steam-os-custom-install](https://github.com/sorialexandre/steam-os-custom-install), and the upstream contributors. The earlier `steamos-dual-boot` link is a boot-repair cheat sheet, not the installer.
 
 The upstream script is **not run unchanged**. The reviewed revision is `b4bd88e8fd4e3d149cc4eb6b909efc1102c28b45`, SHA-256 `041cfda4e78bf1ca574307a6bd9d4057e77086d561602548db25818918443d59`. It has an undefined partition-table variable in its wipe branch and formats chosen indices without verifying that they are safe new partitions. Our local transform removes wipe, sanitize and arbitrary disk/index prompts, retains its copy/boot-finalization flow, and routes partition creation/verification through our A1 guard.
 
