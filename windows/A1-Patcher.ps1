@@ -1,4 +1,5 @@
 # Windows 10/11 launcher. All Linux filesystem work runs inside the chosen WSL distro.
+param([switch]$SmokeTest)
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 if ($env:OS -ne 'Windows_NT') { throw 'This graphical launcher runs on Windows.' }
@@ -115,5 +116,11 @@ Add-Button 'Select a fresh Valve USB to patch (experimental)' 493 {
     Launch-Worker @{action='usb';distro=$selected;source=$source;output=$output;includeDualBoot=[bool]$dualBox.Checked;disk=(Get-A1DiskIdentity $disk)} -Admin
 }
 Add-Label 'After booting the USB: choose the matching install workflow. Optional Decky/TDP/theme setup runs only after SteamOS is fully installed. Preview: Windows hardware validation is pending.' 543 70
+if ($SmokeTest) {
+    if ($form.Controls.Count -lt 10) { throw 'Launcher controls were not constructed.' }
+    $form.Dispose()
+    Write-Host 'PASS: Windows Forms launcher constructs without displaying dialogs, querying WSL or accessing storage.'
+    return
+}
 Refresh-Distros
 [void]$form.ShowDialog()

@@ -29,3 +29,5 @@ try {
 } finally { $source.Dispose(); $dest.Dispose() }
 Initialize-A1VolumeApi
 Write-Host 'PASS: PowerShell syntax, USB boot/system/read-only/transport/identity/sector/size refusals, bounded copy/hash/read-back, EOF refusal and volume-lock API compilation. No physical storage accessed.'
+
+if ($env:OS -eq 'Windows_NT') { & (Join-Path $repo 'windows/A1-Patcher.ps1') -SmokeTest }
