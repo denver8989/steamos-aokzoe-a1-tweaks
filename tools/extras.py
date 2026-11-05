@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Optional post-install setup. Never run this on recovery media or another handheld."""
 import argparse,copy,fcntl,hashlib,json,os,pathlib,pwd,re,shutil,stat,subprocess,sys,tarfile,tempfile,urllib.request,zipfile
+import wifi
 REPO=pathlib.Path(__file__).resolve().parent.parent
 UNIT=pathlib.Path('/etc/systemd/system/plugin_loader.service')
 KEEP=pathlib.Path('/etc/atomic-update.conf.d/91-aokzoe-a1-extras.conf')
@@ -121,13 +122,16 @@ def finish_loader(before):
  else:subprocess.run(['systemctl','disable','plugin_loader.service'],capture_output=True)
  if before['active']:command('systemctl','start','plugin_loader.service')
 def main():
- p=argparse.ArgumentParser(description=__doc__);p.add_argument('action',choices=['install','undo']);p.add_argument('--user',required=True)
+ p=argparse.ArgumentParser(description=__doc__);p.add_argument('action',choices=['install','undo','wifi','wifi-undo']);p.add_argument('--user',required=True)
  for option in ['decky','tdp','glyphs']:p.add_argument('--'+option,action='store_true')
  p.add_argument('--30w',dest='preset30',action='store_true');a=p.parse_args();account=preflight(a.user)
- home=pathlib.Path(account.pw_dir);brew=home/'homebrew';safe(brew)
+ home=pathlib.Path(account.pw_dir);brew=home/'homebrew'
  state=home/'.local/state/aokzoe-a1-extras';safe(state);state.mkdir(parents=True,exist_ok=True,mode=0o700);state.chmod(0o700)
  with (state/'lock').open('w') as lock:
-  fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB);before=loader_state()
+  fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
+  if a.action in ['wifi','wifi-undo']:
+   print(wifi.trial(state/'wifi.json') if a.action=='wifi' else wifi.restore(state/'wifi.json'));return
+  safe(brew);before=loader_state()
   if a.action=='undo':
    if not (state/'original/index.json').is_file():raise RuntimeError('No extras backup exists')
    subprocess.run(['systemctl','stop','plugin_loader.service'],capture_output=True)

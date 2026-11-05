@@ -97,7 +97,7 @@ class Transaction(unittest.TestCase):
   manifest=json.loads((R/'payload/etc/aokzoe-a1/manifest.json').read_text());patterns=(R/'payload/etc/atomic-update.conf.d/90-aokzoe-a1.conf').read_text().splitlines()
   for name in manifest['files']+['/etc/aokzoe-a1/state/original/index.json','/etc/aokzoe-a1/state/original/files/etc/grub.d/09_aokzoe_a1','/etc/aokzoe-a1/state/wake-before']:
    self.assertTrue(any(fnmatch.fnmatch(name,p) for p in patterns if p.startswith('/')),name)
-  self.assertEqual(manifest['version'],4)
+  self.assertEqual(manifest['version'],5)
 class Disk(unittest.TestCase):
  def rows(self):return [{'path':'/dev/nvme0n1','type':'disk','tran':'nvme','ro':False,'size':128*1024**3,'serial':'SYNTHETIC','log-sec':512}]
  def test_selection(self):

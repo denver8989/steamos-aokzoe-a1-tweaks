@@ -1,6 +1,14 @@
 # Slow Wi-Fi investigation — 2026-11-05
 
-Status: research only. No Wi-Fi workaround has been added to the payload or release. The user reported extremely slow Wi-Fi on the original AOKZOE A1. The device is unavailable, its actual adapter/PCI ID has not been verified, and no link measurements or Wi-Fi logs from that unit are available in this task. Whether the problem affects only Steam downloads is also unconfirmed.
+Status: optional adapter-gated trial implemented in A1 Extras; not a proven A1 throughput fix. The user reported extremely slow Wi-Fi on the original AOKZOE A1. The device is unavailable, its actual adapter/PCI ID remains unverified, and no before/after measurements from that unit are available.
+
+## SteamOS and ChimeraOS scope
+
+The initial power-saving evidence came from Linux/MediaTek reports on other distributions. A matching driver is a reason to offer a controlled trial, not proof of equivalent results on Valve SteamOS.
+
+Further review found a **Valve-native fix**: [Valve's July 3, 2026 release notes](https://www.steamdeck.com/en/news?p=7%2F1000) say SteamOS 3.8.14 stable / 3.8.22 beta corrected Wi-Fi speed limits caused by routers advertising incorrect MCS requirements. This patcher's pinned recovery image is labelled 3.8.14. The notes do not prove the state of every installed kernel, but they make shipping an additional shared mac80211 bypass especially unjustified.
+
+[ChimeraOS issue 288](https://github.com/ChimeraOS/chimeraos/issues/288) discusses old RZ608 driver-ID support, not a confirmed current A1 speed fix. Its [device-specific guide](https://github.com/ChimeraOS/chimeraos/wiki/Device-Specific-Configurations) lists an A1 display override, without an A1 Wi-Fi throughput recipe. No ChimeraOS kernel package or configuration is copied here.
 
 ## Findings and candidate fixes
 
@@ -20,8 +28,14 @@ Collect locally, with network identifiers redacted before sharing:
 - Effective NetworkManager power-save configuration of the active connection, plus any existing overrides. Never export passwords, complete connection profiles, SSIDs, MAC addresses or unfiltered logs into public artifacts.
 - Whether the slowdown affects a local-network transfer and other downloads as well as Steam. Compare before/after on the same router, band, location and server. Separate Mbit/s from MB/s (8 Mbit/s = 1 MB/s), and account for Steam disk/decompression bottlenecks.
 
-## Integration decision
+## Optional A1 Extras trial
 
-A future desktop option can offer a reversible **Wi-Fi troubleshooting** trial after identifying the actual adapter. Start with a single power-save change and save/restore the exact prior setting. Verify actual effective radio state, speed, standby and battery effects; report if power saving was already off. Only retain a measured improvement. Avoid making a generic speed fix part of the default hardware bundle until reproduced on the A1.
+After SteamOS is fully installed, open **Set Up A1 Extras**. A separate **Wi-Fi power-saving trial** entry appears only if exactly one wireless adapter has vendor `14c3`, device `0608`, `7961`, `0616` or `7922`, and bound driver `mt7921e`. This covers RZ608/MT7921 and RZ616/MT7922; it does not guess from the A1 model alone or affect an Intel replacement card. The privileged worker repeats detection and the existing exact-original-A1/installed-SteamOS checks before changes.
 
-No device, retained boot media, host networking, firmware, kernel or NetworkManager setting was changed during this investigation.
+The trial requires that adapter to be connected. It records the connection UUID, original NetworkManager powersave value and live radio state in the private root-owned `~/.local/state/aokzoe-a1-extras/wifi.json`, then sets this connection's powersave to `2` and turns off live radio power saving. The application verifies both settings without deliberately reconnecting or restarting NetworkManager. Existing Wi-Fi software must provide `nmcli` and `iw`; failures are reported. No driver, firmware, kernel, ASPM, DNS or region setting is changed. If live power saving is already off, it reports that fact and does nothing.
+
+The separate **Restore Wi-Fi setting** action restores the original profile value and, when the same adapter/connection is active, its original live radio state. It remains available if a different card is fitted. A later unrelated profile edit is refused; an unavailable profile or failed restore retains the backup. Repeat trials preserve the first backup. A failed install attempts rollback; a failed rollback retains the original record for retry. Plugin restore and Wi-Fi restore are independent.
+
+Use the same router/band/location and download source to compare results; restore if there is no benefit. Disabling radio power saving can increase idle battery use. One connection is changed per trial; restore it before trying another. Existing SteamOS connection storage provides profile persistence; actual reboot and SteamOS A/B-update persistence have not been validated for this feature.
+
+The option is off until selected and makes no speed guarantee. Its detection, no-op, rollback and restore behavior is tested with fixtures; actual A1 throughput, standby and battery effects remain untested. No device, retained boot media or host networking was changed while implementing it.

@@ -1,5 +1,5 @@
 {
-  "version": 4,
+  "version": 5,
   "model": "AOKZOE A1 AR07",
   "files": [
     "/etc/aokzoe-a1/audio.conf",
@@ -20,6 +20,7 @@
     "/etc/aokzoe-a1/manage.py",
     "/etc/aokzoe-a1/extras/tools/desktop.py",
     "/etc/aokzoe-a1/extras/tools/extras.py",
-    "/etc/aokzoe-a1/extras/extras/packages.json"
+    "/etc/aokzoe-a1/extras/extras/packages.json",
+    "/etc/aokzoe-a1/extras/tools/wifi.py"
   ]
 }

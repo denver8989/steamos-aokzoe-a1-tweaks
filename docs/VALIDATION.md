@@ -54,3 +54,11 @@ The release is therefore a preview source/toolkit, not a hardware-certified imag
 - The app now chooses a dedicated Ubuntu environment, installs missing components/tools and reports progress automatically. The GUI saves the selected image/output and offers Continue after a requested restart. Rufus is enabled by default.
 - Fixture tests cover rootfs checksum mismatch, WSL elevation arguments, restart exit codes, import arguments/version, verifying before import, environment reuse, conflicting registry paths/WSL 1 refusal and preparation of missing tools. No WSL executable, registry, Windows component or physical disk is accessed by these tests.
 - The pinned rootfs digest comes from Canonical's dated official SHA256SUMS. CI checks the source logic and GUI construction; first-use WSL installation/import, real reboot continuation and interactive progress still require a physical Windows PC test.
+
+
+## Adapter-gated optional Wi-Fi trial
+
+- Total: **60 Python tests**, including 17 new Wi-Fi/GUI tests. Synthetic sysfs checks exact MediaTek IDs, mt7921e binding and wireless presence, refusing wrong-vendor/ID/driver and ambiguous detection.
+- Command fixtures verify backup-before-mutation, exact connection/live-radio undo, root-only backup mode, no-op when already off, original-backup preservation, disconnected/changed-connection refusal, failed-change rollback, retained backup after failed rollback, avoiding newer profile edits and restoring a profile when the adapter is removed. GUI fixtures verify gated visibility and no Decky dependency.
+- The new helper is staged into the installed extras bundle, listed in manifest v5 and covered by the existing narrow updater allowlist. No network settings, radio, NetworkManager process or physical device were touched by the tests.
+- Physical throughput, battery, standby, reboot and actual A/B-update behavior remain untested. The option is a reversible trial, not a proven SteamOS A1 fix. Valve already documents a separate MCS correction in 3.8.14; no community kernel patch is shipped.

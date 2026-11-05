@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """KDE file-picker and optional-extras launchers; no third-party GUI runtime."""
 import os,pathlib,pwd,shlex,shutil,subprocess,sys
+import wifi
 HERE=pathlib.Path(__file__).resolve().parent
 def dialog(*args):
  p=subprocess.run(['kdialog','--title','AOKZOE A1 SteamOS Setup',*args],capture_output=True,text=True)
@@ -19,7 +20,15 @@ def image():
  dialog('--yesno','Create an AOKZOE A1 recovery image?\n\nSource: '+source+'\nNew image: '+output+'\n\nAllow at least 9 GiB free. Internet is needed for the display fix. Your password will be requested in a progress terminal.\n\nAfterward, use Etcher to flash the new image to a spare USB. Keep your existing working USB intact.')
  terminal(['sudo','/usr/bin/python3',str(HERE/'patch-image.py'),source,output]+(['--include-dualboot'] if workflow=='dual' else []))
 def extras():
- action=dialog('--menu','Run after SteamOS is fully installed.','install','Choose optional extras','undo','Restore previous extras')
+ matches=wifi.adapters()
+ options=['install','Choose optional Decky / TDP / glyph extras','undo','Restore previous plugin extras']
+ if len(matches)==1:options+=['wifi','Wi-Fi power-saving trial ('+matches[0]['label']+')']
+ options+=['wifi-undo','Restore Wi-Fi setting from a previous trial']
+ action=dialog('--menu','Run after SteamOS is fully installed.',*options)
+ if action in ['wifi','wifi-undo']:
+  text=('Try disabling Wi-Fi power saving for the connected network?\n\nUpdate SteamOS first. A matching MediaTek adapter was detected. This is a reversible troubleshooting trial, not a proven SteamOS A1 speed fix. It may increase battery use. Compare speed before and after; restore it if it does not help. No driver or kernel is replaced.' if action=='wifi' else 'Restore the Wi-Fi power-saving setting saved before the trial? Plugin extras have their own restore option.')
+  dialog('--yesno',text)
+  terminal(['sudo','/usr/bin/python3',str(HERE/'extras.py'),action,'--user',pwd.getpwuid(os.getuid()).pw_name]);return
  if action=='undo':
   dialog('--yesno','Restore the plugin files and settings saved before this extras setup? Restart afterward. Hardware tweaks have a separate undo command.')
   terminal(['sudo','/usr/bin/python3',str(HERE/'extras.py'),'undo','--user',pwd.getpwuid(os.getuid()).pw_name]);return

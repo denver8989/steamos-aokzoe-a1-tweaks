@@ -29,3 +29,7 @@ All downloads and digests are listed in `extras/packages.json`. No third-party p
 - [Rufus](https://github.com/pbatard/rufus), [official download and publisher details](https://rufus.ie/en/), [v4.15 source](https://github.com/pbatard/rufus/tree/v4.15) and [GPL license](https://github.com/pbatard/rufus/blob/v4.15/LICENSE.txt). The optional Windows handoff downloads the unmodified official x64 portable release on demand; no Rufus binary or source is bundled. The release asset SHA-256 is pinned in `windows/rufus.json` and Windows verifies its Authenticode publisher. Only `-i` (image path) is passed; Rufus retains device selection and write confirmation.
 
 - [Canonical Ubuntu 24.04 WSL root filesystem](https://cloud-images.ubuntu.com/wsl/releases/24.04/20240423/) and its [official checksums](https://cloud-images.ubuntu.com/wsl/releases/24.04/20240423/SHA256SUMS), pinned in `windows/ubuntu.json`. First-use setup downloads and verifies the archive locally before WSL 2 import; it is not redistributed. See [Ubuntu terms](https://ubuntu.com/legal/intellectual-property-policy) and [Microsoft WSL commands](https://learn.microsoft.com/en-us/windows/wsl/basic-commands) for `--no-distribution` and `--import --version 2`.
+
+## Optional Wi-Fi trial
+
+See [Wi-Fi research and implementation scope](WIFI.md) for first-party MediaTek developer discussion, NetworkManager semantics, upstream driver IDs and Valve/ChimeraOS-specific findings. The trial is our own adapter-gated configuration helper; no community script or kernel module is downloaded or bundled.

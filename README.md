@@ -133,4 +133,4 @@ Run `python3 -m unittest discover -s tests -v`. See [validation](docs/VALIDATION
 
 ## Slow Wi-Fi investigation
 
-Wi-Fi workarounds are being evaluated separately; none is enabled in this release. See [candidate community fixes and required checks](docs/WIFI.md). The actual adapter and cause on the reported A1 remain unverified.
+A1 Extras offers an optional **Wi-Fi power-saving trial** only for detected matching MediaTek adapters, plus a separate Restore action. It changes the connected network only and requires no Decky installation. This is an unproven troubleshooting trial; it may increase battery use. No Wi-Fi tweak is enabled automatically. See [adapter checks, SteamOS-specific findings and limits](docs/WIFI.md).
