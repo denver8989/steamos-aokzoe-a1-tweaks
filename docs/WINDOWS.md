@@ -26,7 +26,7 @@ The downloaded root filesystem and Rufus are obtained from upstream on demand; n
 
 The patcher downloads unmodified portable Rufus 4.15 from its official GitHub release, checks the pinned SHA-256 and Windows Authenticode signature for **Akeo Consulting**, and opens it with the generated image selected. Cached downloads are checked again before launch. Windows requests administrator approval for Rufus. No USB is selected automatically and no unattended write is requested.
 
-The image and adjacent `.img.json` checksum report must stay together for this handoff. The separate **Open Rufus with a patched image** button checks the same report. Alternatively, download Rufus yourself and select the generated `.img` manually. A failed Rufus download or launch leaves the successfully generated image available.
+The image and adjacent `.img.json` checksum report must stay together for this handoff. The separate **Open Rufus with an existing patched image** button checks the same report. Alternatively, download Rufus yourself and select the generated `.img` manually. A failed Rufus download or launch leaves the successfully generated image available.
 
 Rufus is downloaded on demand, not bundled or modified. Its source and GPLv3-or-later license are linked in `windows/rufus.json`. The patcher has no direct USB capture/write workflow.
 
