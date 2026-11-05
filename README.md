@@ -4,6 +4,20 @@ Display, rotation, audio and guarded standby support for **AOKZOE A1 AR07** runn
 
 **Preview release:** the underlying standby wake-policy workaround passed reported physical tests on BIOS 1.30 and SteamOS 3.9.5. This new transactional installer has local safety and file-integration tests; its installation/reboot, a real SteamOS A/B update and the complete mounted-image patch path remain untested. Keep a working recovery USB.
 
+## Windows: start here
+
+Download and extract the **ZIP** release, then double-click **Start-A1-Patcher-Windows.cmd**. It opens Valve's own download/license page, offers one-time WSL 2/Ubuntu setup, prepares the Linux backend, and lets you select your original Valve `.img.bz2`/`.img` and a new patched image filename. Flash that local output to a spare USB with Etcher.
+
+Windows preparation uses WSL 2 with Btrfs support; setup may need administrator approval and a restart. This is not a dependency-free native Windows filesystem patcher. A separate **experimental** option can patch a freshly written, pristine Valve USB using identity checks, a file backup, volume locking and read-back hashes. Customized/previously booted media are refused. See [Windows workflow and limits](docs/WINDOWS.md).
+
+The project hosts **patchers and source only, no SteamOS images**. Users obtain Valve's image themselves and apply changes locally. See [distribution model](docs/DISTRIBUTION.md).
+
+## Optional Windows + SteamOS dual boot
+
+The image choosers offer an opt-in **experimental Install Alongside Windows** recovery option based on the corrected [InnoVision custom installer](https://github.com/InnoVision-Games/steam-os-custom-install). It downloads a reviewed upstream revision locally, removes wipe/sanitize/manual-index branches, and requires verified trailing unallocated space. It checks existing partition entries, allocates new indices, saves a GPT backup and refuses native boot-helper mappings that point outside the new SteamOS partitions. It does not shrink or format Windows volumes.
+
+Read [dual-boot preparation and limits](docs/DUAL-BOOT.md) before selecting it. This is a fresh dual-boot workflow, not a repair tool for an existing SteamOS layout. Partitioning and actual Windows/SteamOS boots have not been validated on hardware. The full-wipe recovery icon remains a distinct action and must not be used when preserving Windows.
+
 ## Double-click setup
 
 On a Linux/KDE desktop, extract the release archive and open:
@@ -14,7 +28,7 @@ On a Linux/KDE desktop, extract the release archive and open:
 | **Install-A1-Tweaks.desktop** | Install the hardware fixes on the original A1 after Valve SteamOS is installed. |
 | **Set-Up-A1-Extras.desktop** | After SteamOS installation, choose optional Decky plugins and the A1 theme. |
 
-KDE may ask you to allow execution of a downloaded launcher. Keep the extracted folder together. The image launcher needs the preparation tools listed below. It does not accept ISOs or patch a physical USB in place. Flash the generated image to a spare USB with Etcher. Windows/macOS launchers and direct USB flashing are not included.
+KDE may ask you to allow execution of a downloaded launcher. Keep the extracted folder together. The image launcher needs the preparation tools listed below. It does not accept ISOs or patch a physical USB in place. Flash the generated image to a spare USB with Etcher. The Windows launcher is described above. macOS launchers are not included; direct USB patching is experimental and currently Windows-only.
 
 ## Optional extras after installation
 
@@ -71,7 +85,7 @@ Undo retains its private baseline in `/etc/aokzoe-a1/state/` so restoration can 
 
 Use Linux with Python 3, util-linux (`losetup`, `mount`, `umount`, `findmnt`, `blkid`), btrfs-progs, GNU patch, Bash and desktop-file-utils. The normal SteamOS installer does not require installing these preparation tools.
 
-1. Download Valve's [recovery image](https://steamdeck-images.steamos.cloud/recovery/steamdeck-oobe-repair-20260707.10-3.8.14.img.bz2). The [official index](https://steamdeck-images.steamos.cloud/recovery/) checked for this release lists this as the latest **Steam Deck** recovery image; the newer Steam Frame image targets different hardware. Unknown images, layouts and vendor scripts are refused until reviewed.
+1. Download Valve's [recovery image](https://steamdeck-images.steamos.cloud/recovery/steamdeck-oobe-repair-20260707.10-3.8.14.img.bz2). The [official index](https://steamdeck-images.steamos.cloud/recovery/) checked for this release lists this as the latest **Steam Deck** recovery image; the newer Steam Frame image targets different hardware. Unknown images, layouts and vendor scripts are refused until reviewed. To include the experimental preserve-only InnoVision integration, append `--include-dualboot`; this downloads the pinned upstream script into your local image, not into a public release.
 2. Keep at least 9 GiB free in the output filesystem. Disconnect existing recovery media before preparing an image with the same Btrfs identity. Preserve your known working USB separately.
 3. In the extracted project folder, run:
 
@@ -115,4 +129,4 @@ The standby guard requires exact A1 DMI, BIOS **1.30 / 12/06/2022**, both power-
 
 ## Verification and limitations
 
-Run `python3 -m unittest discover -s tests -v`. See [validation](docs/VALIDATION.md) for exactly what was tested, and [sources](docs/SOURCES.md) for provenance and redistribution boundaries. No physical disk command is executed by the test suite. Updates may change the vendor interfaces; this is guarded persistence, not a promise of compatibility with arbitrary future SteamOS releases. Factory reset/reimage is outside update persistence. Power-limit changes occur only if the optional 30 W preset is selected. Hardware fixes do not require extras.
+Run `python3 -m unittest discover -s tests -v`. See [validation](docs/VALIDATION.md) for exactly what was tested, and [sources](docs/SOURCES.md) for provenance and redistribution boundaries. No physical disk command is executed by the test suite. `tests/windows-check.ps1` adds PowerShell parser, synthetic USB guard and bounded-copy tests without accessing storage. Updates may change the vendor interfaces; this is guarded persistence, not a promise of compatibility with arbitrary future SteamOS releases. Factory reset/reimage is outside update persistence. Power-limit changes occur only if the optional 30 W preset is selected. Hardware fixes do not require extras.

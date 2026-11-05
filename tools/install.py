@@ -56,7 +56,7 @@ def copy_payload(payload,root):
   q=root/p.relative_to(payload)
   if p.is_dir():safe(q).mkdir(parents=True,exist_ok=True)
   else:
-   safe(q);q.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(p,q);q.chmod(p.stat().st_mode&0o777)
+   safe(q);q.parent.mkdir(parents=True,exist_ok=True);shutil.copyfile(p,q);q.chmod(0o755 if str(p.relative_to(payload)) in {'etc/aokzoe-a1/bin/gamescope','etc/grub.d/09_aokzoe_a1'} else 0o644)
  q=root/('etc/'+REL);safe(q.parent).mkdir(parents=True,exist_ok=True)
  if q.is_symlink():q.unlink()
  elif q.exists():raise RuntimeError('Unexpected service enablement file')

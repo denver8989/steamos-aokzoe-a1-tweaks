@@ -15,8 +15,9 @@ def image():
  output=dialog('--getsavefilename',str(pathlib.Path(source).parent/'aokzoe-a1-recovery.img'),'Disk image (*.img)')
  if not output:return
  if pathlib.Path(output).exists() or pathlib.Path(output).is_symlink():raise RuntimeError('Choose a new filename. Existing images will not be overwritten.')
+ workflow=dialog('--menu','Choose recovery options. Dual boot is experimental and requires at least 32 GiB unallocated at the END of the internal disk.','clean','Full reinstall only (erases internal disk)','dual','Also include Install Alongside Windows (preserve-only)')
  dialog('--yesno','Create an AOKZOE A1 recovery image?\n\nSource: '+source+'\nNew image: '+output+'\n\nAllow at least 9 GiB free. Internet is needed for the display fix. Your password will be requested in a progress terminal.\n\nAfterward, use Etcher to flash the new image to a spare USB. Keep your existing working USB intact.')
- terminal(['sudo','/usr/bin/python3',str(HERE/'patch-image.py'),source,output])
+ terminal(['sudo','/usr/bin/python3',str(HERE/'patch-image.py'),source,output]+(['--include-dualboot'] if workflow=='dual' else []))
 def extras():
  action=dialog('--menu','Run after SteamOS is fully installed.','install','Choose optional extras','undo','Restore previous extras')
  if action=='undo':

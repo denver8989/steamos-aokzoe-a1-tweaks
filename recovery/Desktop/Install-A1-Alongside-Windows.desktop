@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=Install A1 Alongside Windows (Preview)
+Comment=Use only trailing unallocated space; preserve existing Windows partitions
+Exec=konsole --hold -e sudo python3 /home/deck/tools/a1-dualboot.py run
+Icon=system-software-install
+Terminal=false
+Categories=System;

@@ -54,7 +54,7 @@ def expand(source,dest):
  if total!=SIZE or h.hexdigest()!=RAW:raise RuntimeError('Expanded source hash/size mismatch')
 def load(name,path):
  spec=importlib.util.spec_from_file_location(name,path);m=importlib.util.module_from_spec(spec);spec.loader.exec_module(m);return m
-def patch_mounted(root,esp,efi,home,edid):
+def patch_mounted(root,esp,efi,home,edid,include_dualboot=False):
  from assets import prepare
  from extras_bundle import stage_extras
  install=load('a1install',HERE/'install.py');support=load('a1support',REPO/'payload/etc/aokzoe-a1/support.py');transform=load('a1transform',REPO/'recovery/transform.py')
@@ -81,8 +81,11 @@ def patch_mounted(root,esp,efi,home,edid):
   shutil.copyfile(pathlib.Path(t)/'repair_device.sh',tools/'repair_device.sh');(tools/'repair_device.sh').chmod(0o755)
  for name in ['a1-disk-guard.py','repair_reimage.sh','start-codex-recovery.sh','install-codex.py']:
   shutil.copyfile(REPO/'recovery'/name,tools/name);(tools/name).chmod(0o755)
+ if include_dualboot:
+  dualstage=load('a1_dualstage',REPO/'dualboot/stage.py');dualstage.stage(tools)
  desktop=home/'deck/Desktop'
  for p in (REPO/'recovery/Desktop').glob('*.desktop'):
+  if p.name=='Install-A1-Alongside-Windows.desktop' and not include_dualboot:continue
   shutil.copyfile(p,desktop/p.name);(desktop/p.name).chmod(0o755)
  # Home belongs to image's deck user, without reading any preparer's account files.
  for p in [*tools.glob('a1-*'),tools/'repair_reimage.sh',tools/'start-codex-recovery.sh',tools/'install-codex.py',*desktop.glob('*.desktop')]:os.chown(p,1000,1000)
@@ -97,7 +100,7 @@ def patch_mounted(root,esp,efi,home,edid):
  run('bash','-n',str(tools/'repair_device.sh'))
  for p in (REPO/'recovery/Desktop').glob('*.desktop'):run('desktop-file-validate',str(p))
 def main():
- p=argparse.ArgumentParser(description=__doc__);p.add_argument('source',type=pathlib.Path);p.add_argument('output');p.add_argument('--edid');p.add_argument('--inspect-only',action='store_true',help='Hash, decompress and inspect GPT only; no root or mounts');a=p.parse_args()
+ p=argparse.ArgumentParser(description=__doc__);p.add_argument('source',type=pathlib.Path);p.add_argument('output');p.add_argument('--edid');p.add_argument('--include-dualboot',action='store_true',help='Stage the experimental preserve-only dual-boot installer from pinned upstream source');p.add_argument('--inspect-only',action='store_true',help='Hash, decompress and inspect GPT only; no root or mounts');a=p.parse_args()
  out=output_path(a.output);partial=out.with_name(out.name+'.partial')
  if partial.exists() or partial.is_symlink():raise RuntimeError('Partial output exists')
  if shutil.disk_usage(out.parent).free<SIZE+1024**3:raise RuntimeError('Need at least 9 GiB free for image copy')
@@ -130,7 +133,7 @@ def main():
      if name=='rootfs-A':
       root=folder;was_ro='ro=true' in subprocess.check_output(['btrfs','property','get','-ts',str(root),'ro'],text=True)
       if was_ro:run('btrfs','property','set','-ts',str(root),'ro','false')
-    patch_mounted(root,tmp/'esp',tmp/'efi-A',tmp/'home',a.edid)
+    patch_mounted(root,tmp/'esp',tmp/'efi-A',tmp/'home',a.edid,a.include_dualboot)
    finally:
     errors=[]
     if root is not None and was_ro:
@@ -148,7 +151,7 @@ def main():
    # Never recursively remove a directory while an image filesystem remains mounted.
    if not mounts:shutil.rmtree(tmp)
   partial.rename(out);completed=True
-  report={'source_url':URL,'source_sha256':COMPRESSED if a.source.name.endswith('.bz2') else RAW,'output_sha256':digest(out),'bytes':out.stat().st_size,'revision':4,'physical_install_tested':False}
+  report={'source_url':URL,'source_sha256':COMPRESSED if a.source.name.endswith('.bz2') else RAW,'output_sha256':digest(out),'bytes':out.stat().st_size,'revision':4,'include_dualboot':a.include_dualboot,'physical_install_tested':False}
   out.with_suffix('.img.json').write_text(json.dumps(report,indent=2)+'\n');print('Patched image: '+str(out))
  finally:
   if mounts or loops:print('Cleanup incomplete: inspect mounts '+str(mounts)+' loops '+str(loops),file=sys.stderr)

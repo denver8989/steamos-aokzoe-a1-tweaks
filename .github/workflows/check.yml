@@ -9,3 +9,10 @@ jobs:
       - uses: actions/checkout@v4
       - run: sudo apt-get update && sudo apt-get install -y desktop-file-utils
       - run: bash tests/check.sh
+  windows-source-checks:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: PowerShell syntax and storage guard tests (no disks accessed)
+        shell: powershell
+        run: ./tests/windows-check.ps1

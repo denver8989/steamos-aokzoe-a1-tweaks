@@ -18,3 +18,10 @@ Own original code is MIT-licensed. This does not relicense referenced firmware, 
 - [Handheld Controller Glyphs](https://github.com/victor-borges/handheld-controller-glyphs), commit `a7eb5ef6d91e1af2d315c73112b5a4eec7b10939`. Its theme manifest explicitly contains the `AOKZOE A1` Handheld option. Both CSS Loader configuration variants are seeded with this choice and activation enabled.
 
 All downloads and digests are listed in `extras/packages.json`. No third-party plugin binary, full plugin source or theme asset is redistributed in the release; these are downloaded from upstream only when selected on the installed device. Their licenses remain upstream.
+
+
+## Windows and dual-boot integration
+
+- [Valve's Steam Deck image agreement](https://store.steampowered.com/steamos/download/?ver=steamdeck): obtain the original image directly; no OS image is redistributed here. See DISTRIBUTION.md.
+- [Microsoft WSL setup](https://learn.microsoft.com/en-us/windows/wsl/install), [mount restrictions](https://learn.microsoft.com/en-us/windows/wsl/wsl2-mount-disk), and [WSL kernel configuration](https://github.com/microsoft/WSL2-Linux-Kernel/blob/linux-msft-wsl-6.18.y/arch/x86/configs/config-wsl). The backend checks actual Btrfs availability; it does not assume that installing userspace tools provides a missing kernel module.
+- [InnoVision-Games/steam-os-custom-install](https://github.com/InnoVision-Games/steam-os-custom-install), pinned in `dualboot/upstream.json`. Its full script is not bundled. An opt-in local transform routes partition creation through our verified free-space planner and removes destructive/manual-selection branches. The inspected repository had no license file; our license does not relicense it. The earlier [steamos-dual-boot](https://github.com/InnoVision-Games/steamos-dual-boot) repository is a repair cheat sheet and its fixed-disk commands are not automated here.

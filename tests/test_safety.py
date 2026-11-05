@@ -73,6 +73,14 @@ class Transaction(unittest.TestCase):
    (root/'old').write_text('installed');before=pathlib.Path(t)/'before';i.capture(root,['old','new'],before);i.extend_baseline(before,original)
    (root/'new').write_text('new release file');i.restore(root,original)
    self.assertEqual((root/'old').read_text(),'baseline');self.assertFalse((root/'new').exists())
+ def test_payload_permissions_are_safe_on_windows_source_mount(self):
+  with tempfile.TemporaryDirectory() as t:
+   folder=pathlib.Path(t);payload=folder/'payload';(payload/'etc/aokzoe-a1/bin').mkdir(parents=True)
+   config=payload/'etc/aokzoe-a1/config';config.write_text('fixture');config.chmod(0o777)
+   executable=payload/'etc/aokzoe-a1/bin/gamescope';executable.write_text('# fixture');executable.chmod(0o777)
+   root=folder/'root';root.mkdir();i.copy_payload(payload,root)
+   self.assertEqual((root/'etc/aokzoe-a1/config').stat().st_mode&0o777,0o644)
+   self.assertEqual((root/'etc/aokzoe-a1/bin/gamescope').stat().st_mode&0o777,0o755)
  def test_refuse_symlink_parent(self):
   with tempfile.TemporaryDirectory() as t:
    root=pathlib.Path(t);(root/'etc').symlink_to(root)

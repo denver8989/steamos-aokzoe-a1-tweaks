@@ -53,7 +53,7 @@ class Extras(unittest.TestCase):
  def test_image_gui_argv_keeps_special_filenames_literal(self):
   with tempfile.TemporaryDirectory() as t:
    output=str(pathlib.Path(t)/'output $ literal.img');source='/tmp/source $(literal).img.bz2'
-   with patch.object(d,'dialog',side_effect=[source,output,'']),patch.object(d,'terminal') as terminal:d.image()
+   with patch.object(d,'dialog',side_effect=[source,output,'clean','']),patch.object(d,'terminal') as terminal:d.image()
    args=terminal.call_args[0][0];self.assertEqual(args[-2:],[source,output]);self.assertIn('patch-image.py',args[2])
  def test_extras_gui_dependency_choices(self):
   with patch.object(d,'dialog',side_effect=['install','"30w" "glyphs"','']),patch.object(d,'terminal') as terminal:d.extras()
