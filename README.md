@@ -130,3 +130,7 @@ The standby guard requires exact A1 DMI, BIOS **1.30 / 12/06/2022**, both power-
 ## Verification and limitations
 
 Run `python3 -m unittest discover -s tests -v`. See [validation](docs/VALIDATION.md) for exactly what was tested, and [sources](docs/SOURCES.md) for provenance and redistribution boundaries. No physical disk command is executed by the test suite. `tests/windows-check.ps1` adds PowerShell parser, action allowlist, Rufus signature/checksum and launch-argument tests without accessing physical storage. Updates may change the vendor interfaces; this is guarded persistence, not a promise of compatibility with arbitrary future SteamOS releases. Factory reset/reimage is outside update persistence. Power-limit changes occur only if the optional 30 W preset is selected. Hardware fixes do not require extras.
+
+## Slow Wi-Fi investigation
+
+Wi-Fi workarounds are being evaluated separately; none is enabled in this release. See [candidate community fixes and required checks](docs/WIFI.md). The actual adapter and cause on the reported A1 remain unverified.
