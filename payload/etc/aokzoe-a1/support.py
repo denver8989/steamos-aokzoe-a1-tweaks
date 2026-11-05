@@ -97,12 +97,18 @@ def grub():
   entry=make_entry(p.stdout,uuid)
   print(entry)
  except (OSError,RuntimeError,subprocess.SubprocessError) as e:log(str(e))
+def persistent_files(manifest):
+ # Image-seeded undo files must also be copied up before the first A/B update.
+ names=list(manifest['files'])
+ state=BASE/'state'
+ if state.is_dir():names.extend(str(p) for p in state.rglob('*') if p.is_file() or p.is_symlink())
+ return list(dict.fromkeys(names))
 def bootstrap():
  if not enabled():return
  manifest=json.loads((BASE/'manifest.json').read_text())
  # Atomic self-copy forces these base-image files into writable /etc's overlay.
  # RAUC copies the explicitly allowlisted overlay files to the updated slot.
- for name in manifest['files']:
+ for name in persistent_files(manifest):
   p=pathlib.Path(name)
   if p.is_symlink():
    target=os.readlink(p);tmp=p.with_name('.a1-link-'+p.name)

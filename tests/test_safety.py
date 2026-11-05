@@ -70,6 +70,14 @@ class Transaction(unittest.TestCase):
   with tempfile.TemporaryDirectory() as t:
    root=pathlib.Path(t);(root/'etc').symlink_to(root)
    with self.assertRaises(RuntimeError):i.capture(root,['etc/new'],root/'backup')
+ def test_image_seeded_undo_is_copied_up(self):
+  with tempfile.TemporaryDirectory() as t:
+   base=pathlib.Path(t);(base/'state/original').mkdir(parents=True)
+   index=base/'state/original/index.json';index.write_text('{}')
+   helper=base/'state/undo-support.py';helper.write_text('# fixture')
+   with patch.object(s,'BASE',base):
+    names=s.persistent_files({'files':['/etc/aokzoe-a1/support.py']})
+   self.assertIn(str(index),names);self.assertIn(str(helper),names)
  def test_allowlist(self):
   manifest=json.loads((R/'payload/etc/aokzoe-a1/manifest.json').read_text());patterns=(R/'payload/etc/atomic-update.conf.d/90-aokzoe-a1.conf').read_text().splitlines()
   for name in manifest['files']+['/etc/aokzoe-a1/state/original/index.json','/etc/aokzoe-a1/state/original/files/etc/grub.d/09_aokzoe_a1','/etc/aokzoe-a1/state/wake-before']:

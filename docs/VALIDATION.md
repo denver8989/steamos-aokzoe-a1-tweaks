@@ -4,7 +4,7 @@ Source validation performed for this preview on 2026-11-05. The A1 and physical 
 
 Passed:
 
-- 21 Python safety tests: exact-model and firmware refusals, fixed-button wake preservation, deep-sleep/AML guards, nonblocking suspend drop-in, current/changed-kernel GRUB generation, unknown-template fallback, stacked ESP automount handling, configuration backup/rollback/reinstall/undo behavior, service symlink behavior, update allowlist, disk-selection/serial/sector/swap refusals, unknown-image/vendor-script refusal and CPIO framing.
+- 22 Python safety tests: exact-model and firmware refusals, fixed-button wake preservation, deep-sleep/AML guards, nonblocking suspend drop-in, current/changed-kernel GRUB generation, unknown-template fallback, stacked ESP automount handling, configuration backup/rollback/reinstall/undo behavior, service symlink behavior, copy-up of image-seeded undo state, update allowlist, disk-selection/serial/sector/swap refusals, unknown-image/vendor-script refusal and CPIO framing.
 - Bash syntax for shipped shell scripts, gamescope wrapper and GRUB hook; desktop-file-validate for every launcher; Python compilation.
 - Original Valve recovery script checksum and exact zero-fuzz transform, expected output checksum and Bash syntax. A mocked full-install action reached normal partitioning flow without invoking NVMe sanitize. Firmware staging blocks are disabled; native filesystem/copy/bootloader steps remain.
 - Real pristine compressed image hash, bzip2 expansion, raw image hash/size and GPT CRCs/layout, using `--inspect-only`; the temporary regular image was deleted afterward.
