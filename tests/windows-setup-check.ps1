@@ -64,6 +64,8 @@ Assert-Refused { Assert-A1ManagedRegistration $null 'C:\fixture\environment' }
         Assert-True ($message -ceq 'A1_RESTART_REQUIRED') 'Setup did not stop for restart'
     } finally {
         $env:PROCESSOR_ARCHITECTURE=$oldArchitecture
+        # The simulated failing WSL command must not leak into the CI shell exit code.
+        $global:LASTEXITCODE=0
         Remove-Item -LiteralPath $fixture -Recurse -Force
     }
 }
